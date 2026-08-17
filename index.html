@@ -1,0 +1,1625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 24px;
+    background: #f7f7f8;
+    color: #1a1a1a;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; }
+  .wrap.has-advanced { max-width: 1360px; }
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  h1 { font-size: 22px; margin: 0; }
+  .source-note { font-size: 12px; color: #999; }
+
+  .tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #e5e5e7;
+  }
+  .tab-btn {
+    appearance: none;
+    border: none;
+    background: transparent;
+    padding: 10px 18px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #888;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+  }
+  .tab-btn.active {
+    color: #ff6b35;
+    border-bottom: 2px solid #ff6b35;
+  }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  .day-section { margin-bottom: 24px; }
+  .day-heading {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #888;
+    margin: 0 0 10px 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .today-tag {
+    background: #ff6b35;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 4px;
+    letter-spacing: 0.03em;
+  }
+
+  .game-card {
+    background: #ffffff;
+    border: 1px solid #e5e5e7;
+    border-radius: 12px;
+    padding: 14px 20px;
+    margin-bottom: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+  }
+  .matchup {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .team { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+  .team.away { justify-content: flex-start; }
+  .team.home { justify-content: flex-end; flex-direction: row-reverse; }
+  .logo {
+    width: 32px; height: 32px;
+    flex-shrink: 0;
+    object-fit: contain;
+    filter: drop-shadow(0 1px 1px rgba(0,0,0,0.15));
+  }
+  .team-info.away { text-align: left; }
+  .team-info.home { text-align: right; }
+  .team-name { font-size: 14.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .team-record { font-size: 12px; color: #777; }
+  .center-info { text-align: center; min-width: 100px; flex-shrink: 0; }
+  .tip-time { font-size: 14.5px; font-weight: 700; }
+  .broadcast { font-size: 11px; color: #999; margin-top: 2px; }
+  .at { color: #bbb; font-size: 12px; }
+
+  .odds-row {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #f0f0f0;
+    flex-wrap: wrap;
+  }
+  .odds-pill {
+    background: #fafafa;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    padding: 5px 10px;
+    font-size: 12px;
+    color: #444;
+    text-align: center;
+  }
+  .odds-pill .odds-label {
+    display: block;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #aaa;
+    margin-bottom: 2px;
+  }
+  .odds-note { font-size: 10px; color: #ccc; text-align: center; margin-top: 6px; }
+
+  .game-card { cursor: pointer; transition: box-shadow 0.15s, border-color 0.15s; }
+  .game-card:hover { box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
+  .game-card.has-injury-flag {
+    border: 2px solid #c0392b;
+    box-shadow: 0 0 0 3px rgba(192,57,43,0.08);
+  }
+  .game-card.has-injury-flag:hover { box-shadow: 0 0 0 3px rgba(192,57,43,0.08), 0 2px 10px rgba(0,0,0,0.06); }
+  .detail-hint {
+    text-align: center;
+    font-size: 11px;
+    color: #bbb;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #f5f5f5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+  }
+  .detail-hint.flagged { color: #c0392b; font-weight: 600; }
+  .detail-hint .chevron { display: inline-block; transition: transform 0.15s; font-size: 9px; }
+  .game-card.expanded .detail-hint .chevron { transform: rotate(180deg); }
+  .game-detail { display: none; margin-top: 14px; padding-top: 14px; border-top: 1px solid #f0f0f0; }
+  .game-card.expanded .game-detail { display: block; }
+  .detail-section + .detail-section { margin-top: 16px; }
+  .detail-section-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #999;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .injury-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .injury-team-head { display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 13px; margin-bottom: 8px; }
+  .injury-team-head .logo-sm { width: 18px; height: 18px; }
+  .injury-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
+  .injury-item { font-size: 12.5px; color: #444; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .injury-item .injury-reason { color: #aaa; font-size: 11px; }
+  .injury-status {
+    font-weight: 700; font-size: 9.5px; text-transform: uppercase;
+    letter-spacing: 0.02em; padding: 2px 6px; border-radius: 4px; flex-shrink: 0;
+  }
+  .injury-status.out, .injury-status.doubtful { background: #fdecec; color: #c0392b; }
+  .injury-status.questionable { background: #fff6e0; color: #b8860b; }
+  .injury-status.probable, .injury-status.available { background: #e6f4ea; color: #1a7f37; }
+  .injury-empty, .series-empty { font-size: 12.5px; color: #bbb; font-style: italic; }
+  .series-summary { font-size: 13px; font-weight: 700; margin-bottom: 8px; color: #1a1a1a; }
+  .series-games { display: flex; flex-direction: column; gap: 5px; }
+  .series-game { font-size: 12.5px; color: #666; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .series-game .sg-date { color: #aaa; flex-shrink: 0; }
+  .series-game .sg-pbp { margin-left: auto; font-size: 11px; font-weight: 600; color: #ff6b35; text-decoration: none; white-space: nowrap; }
+  .series-game .sg-pbp:hover { text-decoration: underline; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #ffffff;
+    border: 1px solid #e5e5e7;
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  th, td {
+    padding: 10px 14px;
+    text-align: left;
+    font-size: 14px;
+  }
+  th {
+    background: #fafafa;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #888;
+    border-bottom: 1px solid #eee;
+  }
+  td { border-bottom: 1px solid #f0f0f0; }
+  tr:last-child td { border-bottom: none; }
+  .rank { color: #999; width: 28px; }
+  .team-cell { display: flex; align-items: center; gap: 10px; font-weight: 600; }
+  .logo-sm {
+    width: 22px; height: 22px; flex-shrink: 0;
+    object-fit: contain;
+    vertical-align: middle;
+    margin-right: 6px;
+    filter: drop-shadow(0 1px 1px rgba(0,0,0,0.12));
+  }
+  .team-cell .logo-sm { margin-right: 0; }
+  .num { text-align: right; }
+  .badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 4px;
+    margin-left: 6px;
+  }
+  .badge.clinch { background: #e6f4ea; color: #1a7f37; }
+  .badge.elim { background: #fdecec; color: #c0392b; }
+
+  .section-title {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #888;
+    margin: 0 0 10px 4px;
+  }
+  .footer {
+    margin-top: 20px;
+    font-size: 12px;
+    color: #aaa;
+    text-align: center;
+  }
+
+  .table-scroll {
+    overflow-x: auto;
+    border: 1px solid #e5e5e7;
+    border-radius: 14px;
+    background: #ffffff;
+  }
+  .stats-table { border: none; border-radius: 0; white-space: nowrap; overflow: visible; border-collapse: separate; border-spacing: 0; }
+  .stats-table th, .stats-table td { padding: 8px 10px; font-size: 13px; }
+  .stats-table th.sortable { cursor: pointer; user-select: none; }
+  .stats-table th.sortable:hover { color: #ff6b35; }
+  .stats-table th.sorted { color: #ff6b35; }
+  .stats-table .rank-col { width: 34px; min-width: 34px; color: #999; text-align: center; padding-left: 6px; padding-right: 4px; }
+  .stats-table .rank-col, .stats-table .player-col { position: sticky; background: #ffffff; z-index: 1; }
+  .stats-table .rank-col { left: 0; }
+  .stats-table .player-col { left: 34px; box-shadow: 1px 0 0 #eee; }
+  .stats-table th.rank-col, .stats-table th.player-col { background: #fafafa; z-index: 2; }
+  .search-row { margin-bottom: 12px; display: flex; gap: 8px; align-items: center; }
+  .search-row input {
+    flex: 1; max-width: 280px; padding: 8px 12px; border: 1px solid #e5e5e7;
+    border-radius: 8px; font-size: 13px; background: #fff;
+  }
+  .search-row .hint { font-size: 12px; color: #999; }
+  .qual-note { font-size: 12px; color: #999; margin-bottom: 12px; }
+
+  .compare-card {
+    background: #ffffff;
+    border: 1px solid #e5e5e7;
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 28px;
+  }
+  .compare-selectors {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .compare-selectors select {
+    padding: 9px 14px;
+    border: 1px solid #e5e5e7;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    background: #fafafa;
+    min-width: 200px;
+    color: #1a1a1a;
+  }
+  .vs-label { font-size: 12px; font-weight: 800; color: #bbb; letter-spacing: 0.05em; }
+  .compare-header {
+    display: grid;
+    grid-template-columns: 1fr 100px 1fr;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .compare-team-header { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
+  .compare-team-header.a { align-items: flex-start; text-align: left; }
+  .compare-team-header.b { align-items: flex-end; text-align: right; }
+  .compare-team-header .logo { width: 44px; height: 44px; }
+  .compare-team-header .ct-name { font-size: 15px; font-weight: 800; }
+  .compare-team-header .ct-rec { font-size: 12px; color: #888; }
+  .compare-mid { text-align: center; font-size: 11px; font-weight: 800; color: #ccc; letter-spacing: 0.05em; }
+
+  .compare-row {
+    display: grid;
+    grid-template-columns: 1fr 100px 1fr;
+    align-items: center;
+    padding: 9px 0;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .compare-row:last-child { border-bottom: none; }
+  .compare-val { font-size: 15px; font-weight: 700; color: #bbb; display: flex; flex-direction: column; gap: 2px; }
+  .compare-val.a { align-items: flex-start; text-align: left; }
+  .compare-val.b { align-items: flex-end; text-align: right; }
+  .compare-val.win { color: #1a1a1a; }
+  .compare-val.win .cv-num { background: #fff2ea; color: #ff6b35; padding: 2px 8px; border-radius: 6px; }
+  .cv-rank { font-size: 10px; font-weight: 600; color: #bbb; text-transform: uppercase; letter-spacing: 0.03em; }
+  .compare-val.win .cv-rank { color: #ff9c73; }
+  .compare-label { text-align: center; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: #999; }
+</style>
+</head>
+<body>
+<div class="wrap has-advanced">
+  <div class="header">
+    <h1>WNBA Dashboard</h1>
+    <div class="source-note">Source: hoopsjunkie.io</div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="schedule">Schedule</button>
+    <button class="tab-btn" data-tab="standings">Standings</button>
+    <button class="tab-btn" data-tab="advanced">Advanced Stats</button>
+    <button class="tab-btn" data-tab="team-advanced">Team Advanced Stats</button>
+    <button class="tab-btn" data-tab="jumpballs">Jump Balls</button>
+  </div>
+
+  <div class="tab-panel active" id="panel-schedule">
+    <div id="schedule-body"></div>
+  </div>
+
+  <div class="tab-panel" id="panel-standings">
+    <div class="section-title">Standings</div>
+    <table>
+      <thead>
+        <tr>
+          <th class="rank">#</th>
+          <th>Team</th>
+          <th class="num">W</th>
+          <th class="num">L</th>
+          <th class="num">PCT</th>
+        </tr>
+      </thead>
+      <tbody id="standings-body"></tbody>
+    </table>
+    <div class="footer">x = clinched playoff berth &middot; o = eliminated from playoffs</div>
+  </div>
+
+  <div class="tab-panel" id="panel-advanced">
+    <div class="section-title">Compare Players</div>
+    <div class="compare-card">
+      <div class="compare-selectors">
+        <select id="compare-player-a"></select>
+        <span class="vs-label">VS</span>
+        <select id="compare-player-b"></select>
+      </div>
+      <div id="compare-player-result"></div>
+    </div>
+
+    <div class="section-title">Advanced Stats &mdash; 2026 Season</div>
+    <div class="qual-note">Qualified players only (min. ~24-26 GP, 15 MPG) &middot; click a column header to sort &middot; scroll right for more stats</div>
+    <div class="search-row">
+      <input type="text" id="player-search" placeholder="Filter by player or team...">
+      <span class="hint" id="result-count"></span>
+    </div>
+    <div class="table-scroll">
+      <table class="stats-table">
+        <thead>
+          <tr id="advanced-head"></tr>
+        </thead>
+        <tbody id="advanced-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="panel-team-advanced">
+    <div class="section-title">Compare Teams</div>
+    <div class="compare-card">
+      <div class="compare-selectors">
+        <select id="compare-team-a"></select>
+        <span class="vs-label">VS</span>
+        <select id="compare-team-b"></select>
+      </div>
+      <div id="compare-result"></div>
+    </div>
+
+    <div class="section-title">Team Advanced Stats &mdash; 2026 Season</div>
+    <div class="qual-note">All 15 teams &middot; click a column header to sort &middot; scroll right for more stats</div>
+    <div class="table-scroll">
+      <table class="stats-table">
+        <thead>
+          <tr id="team-advanced-head"></tr>
+        </thead>
+        <tbody id="team-advanced-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="panel-jumpballs">
+    <div class="section-title">Jump Balls &mdash; 2026 Season</div>
+    <div class="qual-note">Per game &middot; min. 70% of team's games played &middot; click a column header to sort</div>
+    <div class="qual-note">"Early Off Freq%" = share of a player's possessions coming in the first 8 seconds of a dead-ball restart (the closest published stat to "gets an early shot" &mdash; no site tracks shots specifically off the opening jump ball). Some players don't meet that stat's separate qualifier and show "-".</div>
+    <div class="search-row">
+      <input type="text" id="jb-search" placeholder="Filter by player or team...">
+      <span class="hint" id="jb-result-count"></span>
+    </div>
+    <div class="table-scroll">
+      <table class="stats-table">
+        <thead>
+          <tr id="jumpballs-head"></tr>
+        </thead>
+        <tbody id="jumpballs-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+const teamColors = {
+  MIN:"#236192", GSV:"#24145f", LVA:"#000000", IND:"#002d62",
+  ATL:"#e31837", NYL:"#86cebc", WAS:"#e03a3e", DAL:"#c4d600",
+  PDX:"#ff6b35", CHI:"#418fde", PHX:"#e56020", LAS:"#552583",
+  TOR:"#ce0e2d", CON:"#7c878e", SEA:"#2c5234"
+};
+
+// Official WNBA.com team IDs, used to pull real primary logos from the league's CDN.
+const teamLogoIds = {
+  ATL:"1611661330", CHI:"1611661329", CON:"1611661323", DAL:"1611661321",
+  GSV:"1611661331", IND:"1611661325", LVA:"1611661319", LAS:"1611661320",
+  MIN:"1611661324", NYL:"1611661313", PHX:"1611661317", PDX:"1611661327",
+  SEA:"1611661328", TOR:"1611661332", WAS:"1611661322"
+};
+
+const schedule = [
+  { date: "Monday, Aug 17", isToday: true, games: [
+    { away:"DAL", awayName:"Dallas Wings", awayRec:"20-15", home:"GSV", homeName:"Golden State Valkyries", homeRec:"24-9", time:"10:00 PM ET", broadcast:"Peacock",
+      odds: { spreadAway:"+6.5", spreadHome:"-6.5", total:"162.5", mlAway:"+205", mlHome:"-250" },
+      injury: { away:"Aziaha James - Out (Left leg); Azzi Fudd - Out (Right knee); Jessica Shepard - Probable (Right ankle)", home:"Janelle Salaun - Questionable (Right knee soreness)" },
+      series: { summary:"GSV leads season series 2-0", games:"Aug 7: GSV 94 - DAL 76; Jun 17: DAL 80 - GSV 91" } }
+  ]},
+  { date: "Tuesday, Aug 18", isToday: false, games: [
+    { away:"LAS", awayName:"Los Angeles Sparks", awayRec:"12-22", home:"CON", homeName:"Connecticut Sun", homeRec:"8-25", time:"7:00 PM ET", broadcast:"",
+      odds: { spreadAway:"-1.5", spreadHome:"+1.5", total:"172.5", mlAway:"-120", mlHome:"+100" },
+      injury: { away:"Not yet submitted", home:"Not yet submitted" },
+      series: { summary:"CON leads season series 1-0", games:"May 30: LAS 81 - CON 84" } },
+    { away:"IND", awayName:"Indiana Fever", awayRec:"23-12", home:"TOR", homeName:"Toronto Tempo", homeRec:"10-23", time:"7:00 PM ET", broadcast:"ESPN",
+      odds: { spreadAway:"-9.5", spreadHome:"+9.5", total:"192.5", mlAway:"-395", mlHome:"+310" },
+      injury: { away:"Not yet submitted", home:"Not yet submitted" },
+      series: { summary:"IND leads season series 1-0", games:"Jun 16: TOR 91 - IND 113" } },
+    { away:"ATL", awayName:"Atlanta Dream", awayRec:"21-13", home:"LVA", homeName:"Las Vegas Aces", homeRec:"24-12", time:"9:00 PM ET", broadcast:"ESPN",
+      odds: { spreadAway:"+3.5", spreadHome:"-3.5", total:"179.5", mlAway:"+136", mlHome:"-162" },
+      injury: { away:"Not yet submitted", home:"Not yet submitted" },
+      series: { summary:"LVA leads season series 2-0", games:"Aug 3: LVA 109 - ATL 87; May 17: LVA 85 - ATL 84" } },
+    { away:"NYL", awayName:"New York Liberty", awayRec:"22-14", home:"CHI", homeName:"Chicago Sky", homeRec:"13-22", time:"9:00 PM ET", broadcast:"",
+      odds: { spreadAway:"-5.5", spreadHome:"+5.5", total:"182.5", mlAway:"-192", mlHome:"+160" },
+      injury: { away:"Not yet submitted", home:"Not yet submitted" },
+      series: { summary:"NYL leads season series 2-0", games:"Jul 22: CHI 94 - NYL 95; Jun 17: NYL 96 - CHI 95" } }
+  ]},
+  { date: "Wednesday, Aug 19", isToday: false, games: [
+    { away:"TOR", awayName:"Toronto Tempo", awayRec:"10-23", home:"WAS", homeName:"Washington Mystics", homeRec:"20-14", time:"7:30 PM ET", broadcast:"",
+      injury: { away:"No injury report available", home:"No injury report available" },
+      series: { summary:"WAS leads season series 3-0", games:"Jul 14: WAS 79 - TOR 62; Jun 12: TOR 85 - WAS 86; May 8: WAS 68 - TOR 65" } },
+    { away:"MIN", awayName:"Minnesota Lynx", awayRec:"29-7", home:"GSV", homeName:"Golden State Valkyries", homeRec:"24-9", time:"10:00 PM ET", broadcast:"",
+      injury: { away:"No injury report available", home:"No injury report available" },
+      series: { summary:"MIN leads season series 2-0", games:"Jun 19: MIN 81 - GSV 75; Jun 4: GSV 84 - MIN 87" } }
+  ]},
+  { date: "Thursday, Aug 20", isToday: false, games: [
+    { away:"IND", awayName:"Indiana Fever", awayRec:"23-12", home:"DAL", homeName:"Dallas Wings", homeRec:"20-15", time:"8:00 PM ET", broadcast:"Amazon",
+      injury: { away:"No injury report available", home:"No injury report available" },
+      series: { summary:"Season series tied 1-1", games:"Aug 14: DAL 87 - IND 98; May 9: DAL 107 - IND 104" } },
+    { away:"CON", awayName:"Connecticut Sun", awayRec:"8-25", home:"LVA", homeName:"Las Vegas Aces", homeRec:"24-12", time:"10:00 PM ET", broadcast:"",
+      injury: { away:"No injury report available", home:"No injury report available" },
+      series: { summary:"LVA leads season series 2-0", games:"May 15: LVA 101 - CON 94; May 13: LVA 98 - CON 69" } },
+    { away:"ATL", awayName:"Atlanta Dream", awayRec:"21-13", home:"LAS", homeName:"Los Angeles Sparks", homeRec:"12-22", time:"10:00 PM ET", broadcast:"Amazon",
+      injury: { away:"No injury report available", home:"No injury report available" },
+      series: { summary:"ATL leads season series 1-0", games:"Jul 13: LAS 92 - ATL 101" } }
+  ]},
+  { date: "Friday, Aug 21", isToday: false, games: [
+    { away:"MIN", awayName:"Minnesota Lynx", awayRec:"29-7", home:"WAS", homeName:"Washington Mystics", homeRec:"20-14", time:"7:30 PM ET", broadcast:"",
+      injury: { away:"No injury report available", home:"No injury report available" },
+      series: { summary:"Season series tied 1-1", games:"Jun 24: MIN 78 - WAS 76; Jun 21: WAS 84 - MIN 79" } },
+    { away:"GSV", awayName:"Golden State Valkyries", awayRec:"24-9", home:"CHI", homeName:"Chicago Sky", homeRec:"13-22", time:"7:30 PM ET", broadcast:"",
+      injury: { away:"No injury report available", home:"No injury report available" },
+      series: { summary:"Season series tied 1-1", games:"Aug 12: CHI 71 - GSV 91; May 13: CHI 69 - GSV 63" } },
+    { away:"PDX", awayName:"Portland Fire", awayRec:"15-20", home:"TOR", homeName:"Toronto Tempo", homeRec:"10-23", time:"10:00 PM ET", broadcast:"",
+      injury: { away:"No injury report available", home:"No injury report available" },
+      series: { summary:"PDX leads season series 2-0", games:"Aug 6: TOR 83 - PDX 97; May 23: PDX 99 - TOR 80" } }
+  ]}
+];
+
+const standings = [
+  {rank:1, code:"MIN", name:"Minnesota Lynx", w:29, l:7, pct:".806", flag:"x"},
+  {rank:2, code:"GSV", name:"Golden State Valkyries", w:24, l:9, pct:".727", flag:""},
+  {rank:3, code:"LVA", name:"Las Vegas Aces", w:24, l:12, pct:".667", flag:""},
+  {rank:4, code:"IND", name:"Indiana Fever", w:23, l:12, pct:".657", flag:""},
+  {rank:5, code:"ATL", name:"Atlanta Dream", w:21, l:13, pct:".618", flag:""},
+  {rank:6, code:"NYL", name:"New York Liberty", w:22, l:14, pct:".611", flag:""},
+  {rank:7, code:"WAS", name:"Washington Mystics", w:20, l:14, pct:".588", flag:""},
+  {rank:8, code:"DAL", name:"Dallas Wings", w:20, l:15, pct:".571", flag:""},
+  {rank:9, code:"PDX", name:"Portland Fire", w:15, l:20, pct:".429", flag:""},
+  {rank:10, code:"CHI", name:"Chicago Sky", w:13, l:22, pct:".371", flag:""},
+  {rank:11, code:"PHX", name:"Phoenix Mercury", w:13, l:23, pct:".361", flag:""},
+  {rank:12, code:"LAS", name:"Los Angeles Sparks", w:12, l:22, pct:".353", flag:""},
+  {rank:13, code:"TOR", name:"Toronto Tempo", w:10, l:23, pct:".303", flag:""},
+  {rank:14, code:"CON", name:"Connecticut Sun", w:8, l:25, pct:".242", flag:"o"},
+  {rank:15, code:"SEA", name:"Seattle Storm", w:7, l:30, pct:".189", flag:"o"},
+];
+
+function shieldSVG(code, size) {
+  const cls = size === "sm" ? "logo-sm" : "logo";
+  const color = teamColors[code] || "#888";
+  return `<svg class="${cls}" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <path d="M50 3 L92 19 L92 53 Q92 81 50 97 Q8 81 8 53 L8 19 Z" fill="${color}"/>
+    <path d="M50 3 L92 19 L92 53 Q92 81 50 97 Q8 81 8 53 L8 19 Z" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="3"/>
+    <path d="M50 3 L92 19 L92 22 L50 8 L8 22 L8 19 Z" fill="#fff" opacity="0.18"/>
+    <text x="50" y="61" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="800" font-size="32" letter-spacing="-1.5" fill="#fff">${code}</text>
+  </svg>`;
+}
+window.handleLogoError = function(img, code, size) {
+  img.outerHTML = shieldSVG(code, size);
+};
+function logo(code, size) {
+  const cls = size === "sm" ? "logo-sm" : "logo";
+  const teamId = teamLogoIds[code];
+  if (!teamId) return shieldSVG(code, size);
+  return `<img class="${cls}" src="https://cdn.wnba.com/logos/wnba/${teamId}/primary/L/logo.svg" alt="${code}" loading="lazy" onerror="window.handleLogoError(this,'${code}','${size || ""}')" />`;
+}
+
+function renderInjuryList(text) {
+  if (!text || text === "Not yet submitted" || text === "No injury report available") {
+    return `<div class="injury-empty">${text || "No report available"}</div>`;
+  }
+  const items = text.split(";").map(s => s.trim()).filter(Boolean);
+  return `<ul class="injury-list">${items.map(item => {
+    const m = item.match(/^(.*?)\s*-\s*([A-Za-z]+)\s*(?:\(([^)]*)\))?$/);
+    if (!m) return `<li class="injury-item"><span>${item}</span></li>`;
+    const name = m[1], status = m[2], reason = m[3];
+    return `<li class="injury-item"><span>${name}${reason ? ` <span class="injury-reason">(${reason})</span>` : ""}</span><span class="injury-status ${status.toLowerCase()}">${status}</span></li>`;
+  }).join("")}</ul>`;
+}
+
+// ESPN gameIds for prior 2026-season meetings, keyed by "<short date>|<team codes sorted alphabetically>"
+// so a lookup works regardless of which team is listed first in the series text.
+const espnGameIds = {
+  "Aug 7|DAL|GSV": "401857124",
+  "Jun 17|DAL|GSV": "401856998",
+  "Jun 17|CHI|NYL": "401856997",
+  "May 30|CON|LAS": "401856950",
+  "Jun 16|IND|TOR": "401856995",
+  "Aug 3|ATL|LVA": "401857111",
+  "May 17|ATL|LVA": "401856915",
+  "Jul 22|CHI|NYL": "401857088",
+  "Jul 14|TOR|WAS": "401857067",
+  "Jun 12|TOR|WAS": "401856984",
+  "May 8|TOR|WAS": "401856891",
+  "Jun 19|GSV|MIN": "401857005",
+  "Jun 4|GSV|MIN": "401856962",
+  "Aug 14|DAL|IND": "401857143",
+  "May 9|DAL|IND": "401856893",
+  "May 15|CON|LVA": "401856910",
+  "May 13|CON|LVA": "401856905",
+  "May 13|CHI|GSV": "401856906",
+  "Jul 13|ATL|LAS": "401857064",
+  "Jun 24|MIN|WAS": "401857018",
+  "Jun 21|MIN|WAS": "401857010",
+  "Aug 12|CHI|GSV": "401857138",
+  "Aug 6|PDX|TOR": "401857121",
+  "May 23|PDX|TOR": "401856931"
+};
+
+function renderSeriesGames(text) {
+  if (!text || text === "None") return `<div class="series-empty">First meeting of the season</div>`;
+  const items = text.split(";").map(s => s.trim()).filter(Boolean);
+  return `<div class="series-games">${items.map(g => {
+    const idx = g.indexOf(":");
+    const date = idx >= 0 ? g.slice(0, idx).trim() : "";
+    const rest = idx >= 0 ? g.slice(idx + 1).trim() : g;
+    const teamMatch = rest.match(/^([A-Z]{2,4})\s+\d+\s*-\s*([A-Z]{2,4})\s+\d+$/);
+    let link = "";
+    if (teamMatch) {
+      const key = `${date}|${[teamMatch[1], teamMatch[2]].sort().join("|")}`;
+      const gameId = espnGameIds[key];
+      if (gameId) {
+        link = `<a class="sg-pbp" href="https://www.espn.com/wnba/playbyplay/_/gameId/${gameId}" target="_blank" rel="noopener">Play-by-play &rarr;</a>`;
+      }
+    }
+    return `<div class="series-game"><span class="sg-date">${date}</span><span>${rest}</span>${link}</div>`;
+  }).join("")}</div>`;
+}
+
+const NO_INJURY_REPORT_TEXT = ["Not yet submitted", "No injury report available", "", null, undefined];
+function hasInjuryReport(text) {
+  return !NO_INJURY_REPORT_TEXT.includes(text);
+}
+
+const scheduleBody = document.getElementById("schedule-body");
+schedule.forEach(day => {
+  const section = document.createElement("div");
+  section.className = "day-section";
+  const heading = document.createElement("div");
+  heading.className = "day-heading";
+  heading.innerHTML = day.date + (day.isToday ? ' <span class="today-tag">TODAY</span>' : "");
+  section.appendChild(heading);
+
+  day.games.forEach(g => {
+    const injuryFlagged = g.injury && (hasInjuryReport(g.injury.away) || hasInjuryReport(g.injury.home));
+    const card = document.createElement("div");
+    card.className = "game-card" + (injuryFlagged ? " has-injury-flag" : "");
+    card.innerHTML = `
+      <div class="matchup">
+        <div class="team away">
+          ${logo(g.away)}
+          <div class="team-info away">
+            <div class="team-name">${g.awayName}</div>
+            <div class="team-record">${g.awayRec}</div>
+          </div>
+        </div>
+        <div class="center-info">
+          <div class="at">at</div>
+          <div class="tip-time">${g.time}</div>
+          ${g.broadcast ? `<div class="broadcast">${g.broadcast}</div>` : ""}
+        </div>
+        <div class="team home">
+          ${logo(g.home)}
+          <div class="team-info home">
+            <div class="team-name">${g.homeName}</div>
+            <div class="team-record">${g.homeRec}</div>
+          </div>
+        </div>
+      </div>
+      ${g.odds ? `
+      <div class="odds-row">
+        <div class="odds-pill"><span class="odds-label">Spread</span>${g.away} ${g.odds.spreadAway} &middot; ${g.home} ${g.odds.spreadHome}</div>
+        <div class="odds-pill"><span class="odds-label">Total</span>O/U ${g.odds.total}</div>
+        <div class="odds-pill"><span class="odds-label">Moneyline</span>${g.away} ${g.odds.mlAway} &middot; ${g.home} ${g.odds.mlHome}</div>
+      </div>
+      <div class="odds-note">Odds via ESPN &middot; subject to change</div>
+      ` : ""}
+      <div class="detail-hint${injuryFlagged ? " flagged" : ""}">${injuryFlagged ? "&#9873; Injury report filed &mdash; tap for details" : "Injury report &amp; season series"} <span class="chevron">&#9660;</span></div>
+      <div class="game-detail">
+        <div class="detail-section">
+          <div class="detail-section-title">Injury Report</div>
+          <div class="injury-grid">
+            <div class="injury-team">
+              <div class="injury-team-head">${logo(g.away, "sm")}${g.away}</div>
+              ${renderInjuryList(g.injury && g.injury.away)}
+            </div>
+            <div class="injury-team">
+              <div class="injury-team-head">${logo(g.home, "sm")}${g.home}</div>
+              ${renderInjuryList(g.injury && g.injury.home)}
+            </div>
+          </div>
+        </div>
+        <div class="detail-section">
+          <div class="detail-section-title">Season Series</div>
+          <div class="series-summary">${(g.series && g.series.summary) || "Season series tied 0-0"}</div>
+          ${renderSeriesGames(g.series && g.series.games)}
+        </div>
+      </div>
+    `;
+    card.addEventListener("click", () => {
+      card.classList.toggle("expanded");
+    });
+    section.appendChild(card);
+  });
+  scheduleBody.appendChild(section);
+});
+
+const standingsBody = document.getElementById("standings-body");
+standings.forEach(t => {
+  const tr = document.createElement("tr");
+  let badge = "";
+  if (t.flag === "x") badge = '<span class="badge clinch">CLINCHED</span>';
+  if (t.flag === "o") badge = '<span class="badge elim">ELIM</span>';
+  tr.innerHTML = `
+    <td class="rank">${t.rank}</td>
+    <td><div class="team-cell">${logo(t.code, "sm")}${t.code} &middot; ${t.name}${badge}</div></td>
+    <td class="num">${t.w}</td>
+    <td class="num">${t.l}</td>
+    <td class="num">${t.pct}</td>
+  `;
+  standingsBody.appendChild(tr);
+});
+
+// ---- Advanced Stats ----
+const advNamesRaw = `makayla-timpson=Makayla Timpson
+olivia-miles=Olivia Miles
+aja-wilson=A'ja Wilson
+natasha-howard=Natasha Howard
+kelsey-mitchell=Kelsey Mitchell
+lexie-hull=Lexie Hull
+jackie-young=Jackie Young
+aliyah-boston=Aliyah Boston
+kayla-mcbride=Kayla McBride
+monique-billings=Monique Billings
+pauline-astier=Pauline Astier
+caitlin-clark=Caitlin Clark
+courtney-williams=Courtney Williams
+tiffany-hayes=Tiffany Hayes
+chelsea-gray=Chelsea Gray
+sophie-cunningham=Sophie Cunningham
+jewell-loyd=Jewell Loyd
+nalyssa-smith=NaLyssa Smith
+breanna-stewart=Breanna Stewart
+paige-bueckers=Paige Bueckers
+azzi-fudd=Azzi Fudd
+kayla-thornton=Kayla Thornton
+jordin-canada=Jordin Canada
+naz-hillmon=Naz Hillmon
+nia-coffey=Nia Coffey
+janelle-salaun=Janelle Salaun
+jonquel-jones=Jonquel Jones
+kaila-charles=Kaila Charles
+jessica-shepard=Jessica Shepard
+laura-juskaite=Laura Juskaite
+allisha-gray=Allisha Gray
+veronica-burton=Veronica Burton
+carla-leite=Carla Leite
+marine-johannes=Marine Johannes
+odyssey-sims=Odyssey Sims
+awak-kuier=Awak Kuier
+frieda-buhner=Frieda Buhner
+sydney-taylor=Sydney Taylor
+rhyne-howard=Rhyne Howard
+angel-reese=Angel Reese
+erica-wheeler=Erica Wheeler
+gabby-williams=Gabby Williams
+arike-ogunbowale=Arike Ogunbowale
+bridget-carleton=Bridget Carleton
+megan-gustafson=Megan DiLeo
+marina-mabrey=Marina Mabrey
+stephanie-talbot=Stephanie Talbot
+alyssa-thomas=Alyssa Thomas
+maria-conde=Maria Conde
+nneka-ogwumike=Nneka Ogwumike
+noemie-brochant=Noemie Brochant
+julie-allemand=Julie Allemand
+cecilia-zandalasini=Cecilia Zandalasini
+rae-burrell=Rae Burrell
+nyadiew-puoch=Nyadiew Puoch
+michaela-onyenwere=Michaela Onyenwere
+azura-stevens=Azura Stevens
+kamilla-cardoso=Kamilla Cardoso
+cameron-brink=Cameron Brink
+natisha-hiedeman=Natisha Hiedeman
+flaujae-johnson=Flau'jae Johnson
+emily-engstler=Emily Engstler
+dominique-malonga=Dominique Malonga
+kahleah-copper=Kahleah Copper
+sarah-ashlee-barker=Sarah Ashlee Barker
+ariel-atkins=Ariel Atkins
+jacy-sheldon=Jacy Sheldon
+nyara-sabally=Nyara Sabally
+alanna-smith=Alanna Smith
+dearica-hamby=Dearica Hamby
+natasha-cloud=Natasha Cloud
+awa-fam=Awa Fam
+dewanna-bonner=DeWanna Bonner
+olivia-nelson-ododa=Olivia Nelson-Ododa
+shakira-austin=Shakira Austin
+kiah-stokes=Kiah Stokes
+rebekah-gardner=Rebekah Gardner
+kiki-iriafen=Kiki Iriafen
+sonia-citron=Sonia Citron
+valeriane-ayayi=Valeriane Ayayi
+elizabeth-williams=Elizabeth Williams
+georgia-amoore=Georgia Amoore
+natasha-mack=Natasha Mack
+gabriela-jaquez=Gabriela Jaquez
+jordan-horston=Jordan Horston
+charlisse-leger-walker=Charlisse Leger-Walker
+jade-melbourne=Jade Melbourne
+aneesah-morrow=Aneesah Morrow
+saniya-rivers=Saniya Rivers
+stefanie-dolson=Stefanie Dolson
+leila-lacan=Leila Lacan
+kennedy-burke=Kennedy Burke
+cotie-mcmahon=Cotie McMahon
+diamond-miller=Diamond Miller
+katie-lou-samuelson=Katie Lou Samuelson
+lauren-betts=Lauren Betts`;
+
+const advStatsRaw = `makayla-timpson|IND|118.7|105.3|+13.4|4.9|13.2|60.4%|61.9%|35.8%|0.0%|11.8%|18.4%|15.4%|3.5%|8.9%|0.6|1.4%|3.3%|11.6%|15.4%
+olivia-miles|MIN|117.0|103.9|+13.1|15.8|23.1|54.5%|60.5%|34.6%|29.8%|2.6%|14.7%|8.8%|29.3%|23.0%|1.9|1.8%|2.1%|27.2%|11.9%
+aja-wilson|LVA|116.8|106.0|+10.8|22.4|31.8|54.6%|61.7%|45.1%|13.7%|7.1%|28.0%|17.9%|16.1%|10.5%|1.1|2.3%|5.7%|33.0%|9.2%
+natasha-howard|MIN|116.1|102.0|+14.1|14.3|23.5|58.3%|61.8%|34.2%|3.8%|14.1%|17.9%|16.0%|16.9%|17.7%|1.3|2.9%|2.8%|21.8%|13.5%
+kelsey-mitchell|IND|115.9|106.8|+9.1|16.2|21.8|58.8%|62.6%|26.2%|38.7%|1.9%|4.3%|3.1%|13.9%|11.3%|1.5|1.5%|0.2%|27.1%|7.6%
+lexie-hull|IND|115.6|106.8|+8.8|3.5|8.4|48.2%|51.5%|19.9%|53.2%|6.2%|13.0%|9.7%|4.4%|10.0%|0.8|1.4%|0.7%|12.5%|12.0%
+jackie-young|LVA|115.6|105.0|+10.6|15.5|21.4|56.8%|61.5%|24.2%|41.0%|2.7%|12.9%|7.9%|32.5%|27.6%|2.7|1.3%|0.7%|23.7%|10.3%
+aliyah-boston|IND|115.5|106.3|+9.1|14.7|24.3|56.7%|60.7%|27.5%|22.8%|9.6%|29.9%|20.1%|17.6%|15.2%|1.2|2.5%|3.9%|25.8%|12.7%
+kayla-mcbride|MIN|115.4|104.5|+10.9|14.1|20.2|59.1%|64.1%|27.4%|53.4%|2.3%|9.3%|5.9%|9.4%|11.7%|1.6|2.6%|0.8%|20.7%|7.5%
+monique-billings|IND|115.0|109.1|+5.9|7.5|17.1|54.5%|61.2%|58.9%|10.3%|11.4%|20.3%|15.9%|7.3%|13.5%|1.4|2.0%|2.5%|13.9%|10.0%
+pauline-astier|NYL|114.7|107.5|+7.2|7.9|15.7|58.5%|64.6%|35.2%|19.7%|2.7%|9.5%|6.4%|23.7%|27.8%|2.1|2.0%|0.6%|17.2%|13.3%
+caitlin-clark|IND|114.4|108.4|+6.0|16.1|22.4|53.9%|60.3%|39.6%|49.7%|1.1%|13.5%|7.5%|43.4%|25.8%|1.7|1.4%|1.5%|32.0%|14.8%
+courtney-williams|MIN|113.3|104.2|+9.1|11.0|16.2|48.8%|50.6%|9.5%|24.5%|3.4%|16.0%|9.8%|20.5%|20.5%|2.3|1.9%|0.9%|22.8%|9.0%
+tiffany-hayes|GSV|112.9|104.0|+8.9|6.5|19.3|50.9%|59.3%|53.2%|31.8%|3.0%|9.9%|6.4%|28.6%|22.5%|2.5|2.4%|0.9%|23.2%|9.1%
+chelsea-gray|LVA|112.8|107.2|+5.7|10.6|14.1|52.2%|55.3%|13.1%|47.2%|1.0%|10.4%|5.8%|30.0%|33.5%|2.4|1.9%|0.8%|18.7%|14.2%
+sophie-cunningham|IND|112.6|105.4|+7.2|6.6|12.8|61.8%|65.7%|22.5%|66.9%|1.3%|10.3%|6.1%|7.4%|15.4%|2.1|1.2%|0.2%|12.2%|7.3%
+jewell-loyd|LVA|112.4|107.0|+5.4|5.1|8.3|47.0%|50.6%|19.0%|70.8%|2.0%|8.4%|5.2%|6.7%|12.9%|1.4|2.0%|0.6%|14.5%|8.9%
+nalyssa-smith|LVA|112.3|106.7|+5.6|10.3|19.7|63.7%|64.1%|46.7%|2.7%|10.7%|20.2%|15.6%|6.0%|8.2%|1.1|1.2%|2.2%|18.5%|7.1%
+breanna-stewart|NYL|112.2|108.1|+4.1|16.9|23.0|48.9%|56.3%|41.5%|19.9%|6.1%|23.2%|15.0%|17.4%|13.5%|1.5|1.9%|3.5%|27.1%|9.0%
+paige-bueckers|DAL|112.1|108.7|+3.3|16.2|22.1|56.0%|59.6%|22.0%|29.6%|2.4%|12.8%|7.5%|28.1%|22.8%|2.7|1.2%|1.1%|25.2%|8.4%
+azzi-fudd|DAL|112.0|105.6|+6.4|9.5|13.9|54.7%|55.9%|6.2%|45.4%|2.0%|4.6%|3.3%|8.2%|12.0%|1.6|2.7%|2.3%|17.9%|7.4%
+kayla-thornton|GSV|111.9|98.8|+13.1|6.3|12.3|48.9%|52.8%|16.1%|64.0%|6.6%|17.9%|12.0%|5.0%|7.9%|1.0|1.4%|1.0%|15.9%|7.6%
+jordin-canada|ATL|111.8|103.5|+8.4|11.4|16.1|46.3%|52.7%|42.9%|33.9%|2.6%|12.4%|7.1%|35.5%|35.3%|2.7|3.0%|0.6%|17.6%|13.0%
+naz-hillmon|ATL|111.7|106.0|+5.8|6.8|10.7|55.5%|58.5%|19.7%|51.1%|5.8%|14.5%|9.7%|7.9%|13.8%|1.1|1.1%|0.9%|13.5%|12.4%
+nia-coffey|MIN|111.7|103.3|+8.4|6.9|14.3|56.4%|56.7%|11.3%|58.2%|4.5%|18.2%|11.5%|10.8%|21.8%|2.7|2.0%|4.5%|12.4%|8.2%
+janelle-salaun|GSV|111.6|104.0|+7.7|9.1|19.6|55.2%|59.8%|28.5%|61.4%|5.6%|16.7%|11.0%|7.7%|7.6%|1.2|1.3%|0.5%|22.9%|6.3%
+jonquel-jones|NYL|111.2|107.6|+3.6|13.2|20.8|58.7%|63.3%|35.9%|45.5%|9.9%|29.3%|20.0%|16.3%|16.9%|1.3|1.1%|3.4%|20.8%|12.7%
+kaila-charles|GSV|111.0|99.8|+11.2|5.0|12.4|45.0%|47.8%|15.8%|45.0%|10.4%|17.8%|13.9%|11.5%|16.6%|1.4|2.0%|1.2%|16.1%|12.0%
+jessica-shepard|DAL|110.6|107.0|+3.6|15.4|22.6|58.2%|61.3%|34.5%|3.0%|10.8%|31.1%|20.8%|24.9%|26.9%|2.8|1.1%|0.2%|18.7%|9.8%
+laura-juskaite|TOR|110.5|114.7|-4.2|6.8|12.7|54.2%|58.5%|26.8%|39.7%|4.9%|14.1%|9.6%|9.5%|12.5%|0.8|2.6%|0.8%|18.6%|15.9%
+allisha-gray|ATL|110.5|102.8|+7.6|13.6|18.0|52.2%|57.5%|40.0%|37.4%|2.5%|10.5%|6.2%|12.4%|11.0%|1.5|1.9%|1.2%|23.3%|7.6%
+veronica-burton|GSV|110.3|98.7|+11.6|11.5|19.7|50.0%|56.4%|37.1%|40.5%|4.2%|10.6%|7.2%|32.8%|29.7%|3.4|2.4%|1.7%|19.8%|8.8%
+carla-leite|PDX|110.2|112.2|-2.1|11.5|19.4|49.8%|60.0%|60.7%|20.9%|2.8%|7.5%|5.2%|40.7%|26.5%|1.9|1.3%|0.2%|28.5%|14.3%
+marine-johannes|NYL|110.0|104.1|+5.9|6.5|13.5|57.2%|59.2%|10.9%|79.2%|2.6%|9.1%|6.1%|17.3%|19.5%|1.3|1.9%|0.3%|19.8%|14.7%
+odyssey-sims|DAL|109.5|109.7|-0.2|3.7|10.1|46.6%|51.8%|23.5%|35.3%|0.7%|7.0%|3.9%|20.8%|24.4%|2.0|1.7%|0.5%|18.4%|12.2%
+awak-kuier|DAL|109.5|103.2|+6.2|4.8|14.2|54.9%|57.4%|23.9%|41.8%|4.5%|17.3%|11.1%|7.8%|13.0%|1.0|1.4%|6.8%|16.2%|13.5%
+frieda-buhner|PDX|109.4|113.3|-4.0|4.3|12.6|54.6%|59.5%|26.4%|50.7%|6.6%|13.5%|10.1%|7.3%|9.9%|1.0|1.0%|0.4%|18.2%|10.4%
+sydney-taylor|CHI|109.2|104.7|+4.5|8.8|17.9|55.0%|58.4%|21.5%|52.7%|2.2%|6.9%|4.4%|14.5%|10.3%|1.1|1.6%|1.1%|28.8%|9.4%
+rhyne-howard|ATL|109.2|104.8|+4.4|14.7|19.2|51.9%|56.5%|22.6%|62.6%|2.5%|11.8%|6.7%|17.0%|17.4%|2.8|3.2%|2.7%|20.0%|6.2%
+angel-reese|ATL|108.8|101.0|+7.8|12.9|18.8|43.5%|50.4%|47.9%|10.3%|18.3%|27.9%|22.8%|14.2%|11.5%|0.8|2.6%|2.5%|25.5%|14.9%
+erica-wheeler|LAS|108.7|110.4|-1.7|6.8|10.3|46.2%|49.4%|14.4%|49.8%|1.2%|8.2%|4.6%|27.2%|31.8%|2.8|1.8%|0.1%|17.7%|11.5%
+gabby-williams|GSV|108.6|101.0|+7.6|10.0|18.8|48.1%|51.7%|25.2%|38.7%|3.4%|12.5%|7.8%|17.2%|12.1%|1.4|3.5%|0.5%|28.8%|8.7%
+arike-ogunbowale|DAL|108.4|107.4|+1.1|9.8|14.4|46.2%|53.0%|32.2%|42.2%|3.5%|9.3%|6.3%|16.3%|16.3%|1.9|1.5%|0.2%|23.4%|8.8%
+bridget-carleton|PDX|108.3|111.1|-2.8|10.9|16.1|53.0%|56.6%|18.1%|62.2%|2.8%|16.1%|9.4%|10.7%|12.6%|1.6|2.3%|1.6%|20.2%|7.6%
+megan-gustafson|PDX|108.2|111.3|-3.0|9.9|19.2|62.2%|64.4%|19.3%|37.6%|7.1%|14.4%|10.8%|7.7%|8.6%|1.3|0.7%|2.5%|20.1%|6.5%
+marina-mabrey|TOR|107.6|117.0|-9.4|13.4|19.8|55.8%|60.7%|27.5%|54.7%|2.4%|12.1%|7.3%|23.4%|15.4%|1.2|1.4%|1.1%|30.6%|13.1%
+stephanie-talbot|LVA|107.2|103.9|+3.4|2.9|8.4|47.9%|49.6%|13.8%|60.6%|5.2%|11.9%|8.7%|9.1%|22.5%|2.0|1.9%|1.7%|10.2%|11.3%
+alyssa-thomas|PHX|107.2|110.6|-3.5|14.6|19.3|52.1%|56.8%|48.6%|0.8%|6.0%|21.2%|13.6%|42.4%|32.1%|2.3|2.2%|1.3%|22.6%|13.9%
+maria-conde|TOR|107.1|115.9|-8.8|6.1|9.7|47.4%|50.3%|14.2%|54.3%|4.6%|16.5%|10.6%|14.6%|19.8%|1.7|0.8%|0.6%|16.9%|11.6%
+nneka-ogwumike|LAS|106.9|114.1|-7.2|14.7|20.9|56.3%|59.5%|20.4%|28.8%|6.9%|28.4%|17.3%|16.6%|16.3%|1.7|1.8%|1.1%|22.2%|9.8%
+noemie-brochant|PHX|106.4|111.6|-5.2|4.8|9.9|55.7%|55.8%|6.9%|51.6%|2.3%|9.5%|5.9%|11.8%|22.6%|2.0|2.2%|1.0%|12.2%|11.5%
+julie-allemand|TOR|106.3|113.6|-7.4|8.8|14.4|71.4%|72.3%|7.1%|63.4%|0.9%|12.4%|6.8%|28.8%|47.0%|3.2|2.6%|1.3%|9.9%|14.6%
+cecilia-zandalasini|GSV|106.2|99.7|+6.5|5.1|12.6|50.5%|53.1%|14.4%|51.2%|2.0%|12.1%|6.8%|16.7%|14.9%|1.1|2.4%|1.0%|24.1%|13.3%
+rae-burrell|LAS|106.1|114.3|-8.2|9.3|13.5|54.7%|59.5%|31.7%|40.2%|2.4%|7.6%|5.0%|13.1%|14.2%|1.0|1.3%|1.8%|21.4%|13.7%
+nyadiew-puoch|PDX|106.0|112.4|-6.4|2.4|6.2|41.5%|44.0%|18.5%|46.8%|5.1%|7.7%|6.4%|4.9%|10.5%|1.2|2.2%|0.7%|12.5%|8.8%
+michaela-onyenwere|WAS|106.0|101.8|+4.2|5.6|9.8|51.5%|56.5%|29.9%|47.7%|8.3%|6.6%|7.4%|11.2%|15.6%|1.1|1.0%|0.4%|16.0%|14.4%
+azura-stevens|CHI|106.0|111.2|-5.2|7.8|13.4|44.8%|48.8%|23.9%|35.9%|6.7%|24.5%|15.4%|15.3%|15.2%|1.4|1.7%|2.0%|22.2%|11.2%
+kamilla-cardoso|CHI|105.8|109.7|-3.9|13.3|22.7|56.8%|60.8%|40.8%|0.0%|11.2%|25.9%|18.6%|16.4%|14.7%|1.4|1.0%|4.9%|22.7%|10.9%
+cameron-brink|LAS|105.8|107.9|-2.1|6.5|16.2|56.3%|60.4%|39.0%|40.9%|9.6%|21.9%|16.1%|11.7%|11.3%|0.6|1.4%|8.9%|23.4%|20.1%
+natisha-hiedeman|SEA|105.7|110.0|-4.3|11.3|16.6|52.2%|56.3%|21.7%|44.8%|1.1%|8.7%|4.9%|27.6%|23.0%|2.1|1.8%|0.4%|23.3%|10.8%
+flaujae-johnson|SEA|105.7|109.1|-3.4|9.0|13.7|43.8%|49.1%|28.8%|36.8%|3.8%|15.5%|9.8%|17.0%|15.8%|1.2|2.3%|2.3%|24.4%|12.8%
+emily-engstler|PDX|105.5|111.2|-5.7|7.8|15.2|52.1%|54.2%|20.6%|43.2%|5.8%|21.3%|13.5%|14.4%|17.2%|1.2|2.8%|5.8%|18.7%|14.4%
+dominique-malonga|SEA|105.4|111.4|-6.0|12.8|22.0|51.6%|55.4%|28.1%|15.9%|11.8%|27.6%|20.0%|12.1%|8.6%|0.6|1.7%|5.2%|29.3%|13.7%
+kahleah-copper|PHX|105.2|110.5|-5.3|11.5|14.6|48.7%|54.9%|40.7%|36.4%|2.1%|12.0%|7.0%|10.8%|7.9%|0.7|1.1%|0.3%|28.8%|10.7%
+sarah-ashlee-barker|PDX|105.1|108.1|-3.0|7.9|14.5|59.2%|60.6%|14.4%|39.8%|4.7%|19.1%|12.2%|16.8%|17.8%|1.3|1.7%|1.1%|19.5%|14.0%
+ariel-atkins|LAS|105.0|110.2|-5.2|6.3|9.8|43.4%|47.4%|15.9%|51.9%|3.5%|9.4%|6.4%|15.3%|21.1%|1.7|2.8%|1.3%|17.2%|12.5%
+jacy-sheldon|CHI|104.8|103.5|+1.4|4.7|9.8|51.1%|54.6%|17.8%|51.7%|2.2%|4.6%|3.5%|11.2%|20.0%|2.3|1.9%|1.2%|13.2%|8.9%
+nyara-sabally|TOR|104.8|111.6|-6.8|10.2|19.8|57.5%|61.1%|39.2%|24.6%|9.0%|17.2%|13.1%|13.4%|12.9%|1.2|2.1%|3.7%|21.5%|10.7%
+alanna-smith|DAL|104.2|110.8|-6.6|4.1|11.0|47.2%|49.1%|19.0%|44.4%|8.3%|19.9%|13.8%|9.8%|13.0%|0.9|2.1%|2.9%|17.8%|14.0%
+dearica-hamby|LAS|104.2|110.3|-6.1|13.1|19.9|57.5%|60.7%|42.1%|9.9%|8.0%|21.3%|14.6%|14.8%|14.8%|1.3|2.6%|1.3%|21.1%|11.0%
+natasha-cloud|CHI|104.1|106.9|-2.8|9.1|13.6|52.6%|59.6%|40.2%|43.8%|0.9%|12.7%|6.7%|27.3%|30.9%|2.3|2.0%|0.9%|16.6%|13.2%
+awa-fam|SEA|104.1|109.9|-5.9|8.5|14.1|56.5%|58.3%|12.2%|47.1%|8.0%|15.9%|12.0%|10.4%|14.1%|1.1|1.5%|3.0%|17.1%|12.8%
+dewanna-bonner|PHX|103.7|108.2|-4.5|9.1|14.9|45.8%|52.0%|31.4%|51.8%|3.6%|22.8%|13.1%|9.0%|11.4%|1.9|2.0%|2.9%|18.0%|5.9%
+olivia-nelson-ododa|CON|103.7|106.2|-2.6|8.7|19.1|58.1%|61.5%|60.5%|0.6%|9.9%|26.9%|18.3%|12.7%|13.5%|1.1|1.9%|3.6%|19.9%|12.2%
+shakira-austin|WAS|103.6|101.6|+2.0|13.0|19.7|50.4%|55.6%|43.8%|11.4%|7.8%|29.4%|19.2%|16.0%|11.5%|0.8|1.0%|4.2%|27.0%|13.9%
+kiah-stokes|GSV|103.5|98.0|+5.6|5.3|12.5|50.9%|51.0%|13.2%|49.1%|5.6%|23.4%|14.3%|8.9%|21.6%|2.4|1.6%|7.7%|9.4%|9.1%
+rebekah-gardner|NYL|103.5|103.2|+0.3|4.5|13.8|49.1%|54.3%|23.2%|29.5%|7.2%|10.9%|9.1%|14.3%|22.2%|2.3|1.5%|1.0%|13.5%|9.7%
+kiki-iriafen|WAS|103.4|102.3|+1.2|11.5|18.9|52.2%|55.1%|41.4%|10.1%|13.1%|25.0%|19.4%|11.2%|9.5%|0.9|1.3%|1.2%|23.9%|10.4%
+sonia-citron|WAS|103.1|102.3|+0.8|13.7|18.5|52.6%|61.0%|47.7%|35.3%|3.3%|10.6%|7.1%|21.3%|18.9%|1.5|1.8%|2.1%|21.9%|12.3%
+valeriane-ayayi|PHX|103.0|108.1|-5.0|4.4|11.6|47.0%|56.8%|66.7%|49.6%|5.2%|13.8%|9.4%|11.2%|12.8%|0.7|1.5%|1.2%|18.9%|17.2%
+elizabeth-williams|CHI|102.5|102.6|-0.1|4.5|11.9|45.6%|45.3%|45.6%|0.0%|8.7%|15.6%|12.1%|13.8%|17.7%|1.6|1.3%|4.3%|16.3%|11.2%
+georgia-amoore|WAS|102.5|104.2|-1.7|2.4|4.0|42.6%|46.6%|18.0%|70.5%|1.2%|5.0%|3.1%|24.4%|28.9%|1.5|0.7%|0.5%|16.8%|19.0%
+natasha-mack|PHX|102.4|107.8|-5.3|9.0|19.7|62.4%|65.2%|30.2%|5.4%|12.9%|24.4%|18.5%|11.1%|15.1%|1.5|1.5%|5.3%|14.7%|9.9%
+gabriela-jaquez|CHI|102.1|106.7|-4.6|4.6|10.1|45.2%|51.2%|32.4%|29.5%|4.4%|15.1%|9.6%|7.9%|10.5%|0.9|1.9%|0.1%|17.4%|11.6%
+jordan-horston|SEA|101.1|103.0|-1.9|3.8|9.8|42.2%|44.6%|19.0%|34.0%|6.0%|18.9%|12.5%|11.8%|16.0%|1.1|2.7%|2.4%|16.9%|15.2%
+charlisse-leger-walker|CON|100.1|107.8|-7.7|4.3|7.8|45.8%|49.3%|21.4%|43.8%|1.2%|10.2%|5.5%|23.5%|26.9%|1.9|1.9%|0.7%|17.5%|14.0%
+jade-melbourne|SEA|100.0|106.6|-6.6|7.0|12.5|48.7%|55.4%|46.2%|35.0%|1.7%|7.3%|4.6%|26.1%|27.5%|2.2|1.9%|0.8%|17.6%|12.5%
+aneesah-morrow|CON/TOR|99.9|111.6|-11.7|8.8|17.6|46.0%|49.1%|28.8%|30.7%|12.2%|31.1%|21.3%|11.7%|10.1%|0.9|2.0%|2.6%|24.4%|11.0%
+saniya-rivers|CON|99.4|111.4|-12.0|4.3|8.4|37.6%|41.1%|25.8%|24.7%|2.0%|11.1%|6.3%|21.7%|22.3%|2.4|2.3%|2.8%|19.3%|9.5%
+stefanie-dolson|SEA|99.1|109.4|-10.4|2.8|8.6|56.5%|61.1%|32.9%|52.9%|4.7%|12.8%|8.8%|12.0%|23.6%|1.4|1.1%|2.5%|10.5%|16.4%
+leila-lacan|CON|98.2|106.9|-8.8|8.4|13.2|47.1%|50.3%|21.6%|32.2%|2.4%|6.4%|4.4%|27.4%|24.1%|2.1|3.0%|1.2%|21.3%|11.7%
+kennedy-burke|CON|97.6|103.6|-6.0|6.1|11.8|47.5%|50.8%|29.9%|52.7%|5.0%|11.2%|8.0%|9.3%|11.9%|0.8|2.3%|3.4%|17.6%|14.8%
+cotie-mcmahon|WAS|97.2|101.0|-3.8|4.6|9.8|43.5%|47.2%|42.0%|34.7%|3.3%|15.1%|9.4%|16.9%|19.8%|2.0|1.5%|0.9%|16.9%|9.7%
+diamond-miller|CON|97.1|109.1|-12.0|4.6|8.4|40.6%|45.5%|25.4%|42.1%|1.7%|12.6%|6.9%|11.2%|12.5%|1.2|1.6%|1.0%|20.2%|10.9%
+katie-lou-samuelson|SEA|96.3|113.6|-17.3|3.7|11.3|54.5%|57.5%|25.8%|68.5%|2.9%|12.5%|7.6%|7.5%|14.1%|1.4|2.5%|0.2%|12.3%|10.4%
+lauren-betts|WAS|95.7|99.2|-3.5|6.0|16.9|55.6%|59.1%|39.6%|0.0%|8.7%|21.1%|15.1%|10.8%|13.1%|1.0|1.8%|4.4%|16.6%|13.1%`;
+
+const advCols = [
+  { key:"ORtg", label:"ORtg", full:"Offensive Rating", dir:"high" },
+  { key:"DRtg", label:"DRtg", full:"Defensive Rating", dir:"low" },
+  { key:"NetRtg", label:"Net", full:"Net Rating", dir:"high" },
+  { key:"GmSc", label:"GmSc", full:"Game Score", dir:"high" },
+  { key:"PER", label:"PER", full:"Player Efficiency Rating", dir:"high" },
+  { key:"eFG", label:"eFG%", full:"Effective FG%", dir:"high" },
+  { key:"TS", label:"TS%", full:"True Shooting %", dir:"high" },
+  { key:"FTr", label:"FTr", full:"Free Throw Rate", dir:"neutral" },
+  { key:"3PAr", label:"3PAr", full:"Three Point Rate", dir:"neutral" },
+  { key:"OREB", label:"OREB%", full:"Offensive Rebound %", dir:"high" },
+  { key:"DREB", label:"DREB%", full:"Defensive Rebound %", dir:"high" },
+  { key:"REB", label:"REB%", full:"Total Rebound %", dir:"high" },
+  { key:"AST", label:"AST%", full:"Assist %", dir:"high" },
+  { key:"ASTRatio", label:"AST Rt", full:"Assist Ratio", dir:"high" },
+  { key:"ASTTOV", label:"AST/TO", full:"Assist to Turnover Ratio", dir:"high" },
+  { key:"STL", label:"STL%", full:"Steal %", dir:"high" },
+  { key:"BLK", label:"BLK%", full:"Block %", dir:"high" },
+  { key:"USG", label:"USG%", full:"Usage %", dir:"neutral" },
+  { key:"TOVRatio", label:"TOV Rt", full:"Turnover Ratio", dir:"low" }
+];
+
+const advNameMap = {};
+advNamesRaw.trim().split("\n").forEach(line => {
+  const idx = line.indexOf("=");
+  advNameMap[line.slice(0, idx)] = line.slice(idx + 1);
+});
+
+const advancedStats = advStatsRaw.trim().split("\n").map(line => {
+  const parts = line.split("|");
+  const slug = parts[0];
+  const team = parts[1];
+  const vals = parts.slice(2);
+  const player = { slug, name: advNameMap[slug] || slug, team };
+  advCols.forEach((col, i) => {
+    const raw = vals[i];
+    player[col.key] = raw === undefined ? null : parseFloat(raw.replace("%", "").replace("+", ""));
+    player[col.key + "_display"] = raw;
+  });
+  return player;
+});
+
+advCols.forEach(col => {
+  const dirMult = col.dir === "low" ? 1 : -1; // low: ascending (rank 1 = smallest); otherwise descending (rank 1 = largest)
+  const ranked = advancedStats
+    .filter(p => p[col.key] !== null)
+    .slice()
+    .sort((a, b) => (a[col.key] - b[col.key]) * dirMult);
+  let rank = 0;
+  let prevVal = null;
+  ranked.forEach((p, i) => {
+    if (p[col.key] !== prevVal) { rank = i + 1; prevVal = p[col.key]; }
+    p[col.key + "_rank"] = rank;
+  });
+});
+
+const playerBySlug = {};
+advancedStats.forEach(p => { playerBySlug[p.slug] = p; });
+
+let advSortKey = "ORtg";
+let advSortDir = -1;
+let advFilter = "";
+
+function renderAdvancedHead() {
+  const head = document.getElementById("advanced-head");
+  let html = `<th class="rank-col">#</th><th class="player-col sortable" data-key="name">Player</th><th class="sortable" data-key="team">Team</th>`;
+  advCols.forEach(col => {
+    html += `<th class="num sortable" data-key="${col.key}">${col.label}</th>`;
+  });
+  head.innerHTML = html;
+  head.querySelectorAll(".sortable").forEach(th => {
+    th.addEventListener("click", () => {
+      const key = th.dataset.key;
+      if (advSortKey === key) { advSortDir *= -1; } else { advSortKey = key; advSortDir = key === "name" || key === "team" ? 1 : -1; }
+      renderAdvancedBody();
+      head.querySelectorAll("th").forEach(h => h.classList.remove("sorted"));
+      th.classList.add("sorted");
+    });
+  });
+}
+
+function renderAdvancedBody() {
+  const body = document.getElementById("advanced-body");
+  const q = advFilter.trim().toLowerCase();
+  let rows = advancedStats.filter(p => !q || p.name.toLowerCase().includes(q) || p.team.toLowerCase().includes(q));
+  rows = rows.slice().sort((a, b) => {
+    let av = a[advSortKey], bv = b[advSortKey];
+    if (advSortKey === "name" || advSortKey === "team") {
+      av = a[advSortKey]; bv = b[advSortKey];
+      return av.localeCompare(bv) * advSortDir;
+    }
+    if (av === null) return 1;
+    if (bv === null) return -1;
+    return (av - bv) * advSortDir;
+  });
+  document.getElementById("result-count").textContent = q ? `${rows.length} of ${advancedStats.length} players` : `${advancedStats.length} players`;
+  body.innerHTML = rows.map((p, i) => {
+    let cells = `<td class="rank-col">${i + 1}</td><td class="player-col">${p.name}</td><td>${logo(p.team.split("/")[0], "sm")}${p.team}</td>`;
+    advCols.forEach(col => {
+      cells += `<td class="num">${p[col.key + "_display"] ?? "-"}</td>`;
+    });
+    return `<tr>${cells}</tr>`;
+  }).join("");
+}
+
+renderAdvancedHead();
+renderAdvancedBody();
+document.querySelector('.stats-table th[data-key="ORtg"]').classList.add("sorted");
+
+document.getElementById("player-search").addEventListener("input", (e) => {
+  advFilter = e.target.value;
+  renderAdvancedBody();
+});
+
+// ---- Player Comparison ----
+const playerAOrder = advancedStats.slice().sort((a, b) => a.name.localeCompare(b.name));
+const selectPlayerA = document.getElementById("compare-player-a");
+const selectPlayerB = document.getElementById("compare-player-b");
+playerAOrder.forEach(p => {
+  selectPlayerA.innerHTML += `<option value="${p.slug}">${p.name} (${p.team})</option>`;
+  selectPlayerB.innerHTML += `<option value="${p.slug}">${p.name} (${p.team})</option>`;
+});
+selectPlayerA.value = advancedStats[0].slug;
+selectPlayerB.value = (advancedStats[1] || advancedStats[0]).slug;
+
+function renderPlayerCompare() {
+  const a = playerBySlug[selectPlayerA.value];
+  const b = playerBySlug[selectPlayerB.value];
+  const result = document.getElementById("compare-player-result");
+  if (!a || !b) { result.innerHTML = ""; return; }
+
+  let html = `
+    <div class="compare-header">
+      <div class="compare-team-header a">
+        ${logo(a.team.split("/")[0])}
+        <div class="ct-name">${a.name}</div>
+        <div class="ct-rec">${a.team}</div>
+      </div>
+      <div class="compare-mid">VS</div>
+      <div class="compare-team-header b">
+        ${logo(b.team.split("/")[0])}
+        <div class="ct-name">${b.name}</div>
+        <div class="ct-rec">${b.team}</div>
+      </div>
+    </div>
+  `;
+
+  advCols.forEach(col => {
+    const av = a[col.key], bv = b[col.key];
+    const aDisplay = a[col.key + "_display"] ?? "-";
+    const bDisplay = b[col.key + "_display"] ?? "-";
+    const aRank = a[col.key + "_rank"];
+    const bRank = b[col.key + "_rank"];
+    let aWin = false, bWin = false;
+    if (col.dir !== "neutral" && av !== null && bv !== null && av !== bv) {
+      if (col.dir === "high") { aWin = av > bv; bWin = bv > av; }
+      else { aWin = av < bv; bWin = bv < av; }
+    }
+    html += `
+      <div class="compare-row">
+        <div class="compare-val a ${aWin ? "win" : ""}">
+          <span class="cv-num">${aDisplay}</span>
+          ${aRank ? `<span class="cv-rank">${ordinal(aRank)} of ${advancedStats.length}</span>` : ""}
+        </div>
+        <div class="compare-label">${col.full}</div>
+        <div class="compare-val b ${bWin ? "win" : ""}">
+          <span class="cv-num">${bDisplay}</span>
+          ${bRank ? `<span class="cv-rank">${ordinal(bRank)} of ${advancedStats.length}</span>` : ""}
+        </div>
+      </div>
+    `;
+  });
+
+  result.innerHTML = html;
+}
+
+selectPlayerA.addEventListener("change", renderPlayerCompare);
+selectPlayerB.addEventListener("change", renderPlayerCompare);
+renderPlayerCompare();
+
+// ---- Team Advanced Stats ----
+const teamStatsRaw = `IND|115.8|107.7|+8.1|81.9|14.3s|56.0%|60.7%|32.6%|37.9%|26.1%|75.4%|60.8%|18.1%|1.5|8.1%|8.3%|12.2%|63.6%|46.1%|40.4%|39.1%|34.0%|39.4%|63.9%|45.2%|35.9%|43.1%|40.0%|37.9%|8.4|2.0|55.2%|2.7|40.8%|11.4|2.2|48.7%|2.8|34.4%|16.5|3.6|48.4%|5.2|37.7%
+MIN|114.7|104.5|+10.2|80.7|14.1s|55.0%|58.6%|24.7%|33.2%|29.0%|73.2%|63.4%|19.3%|1.8|11.4%|11.1%|11.0%|63.7%|43.9%|40.8%|39.0%|47.6%|40.9%|62.9%|44.7%|39.1%|39.9%|40.9%|38.5%|9.9|2.4|52.5%|1.8|34.4%|14.1|2.4|56.6%|4.3|46.4%|19.0|4.4|51.3%|4.6|35.9%
+LVA|113.2|107.5|+5.6|79.7|15.0s|54.6%|58.9%|29.3%|34.5%|23.0%|75.1%|66.8%|19.8%|1.8|8.6%|10.8%|10.8%|70.7%|51.3%|39.6%|35.2%|47.1%|29.0%|69.6%|47.8%|50.3%|36.2%|39.2%|33.6%|9.2|2.6|60.8%|3.5|42.4%|10.8|2.0|54.5%|2.7|40.5%|15.9|4.0|50.4%|4.9|40.4%
+NYL|111.6|108.3|+3.3|79.5|15.0s|54.0%|59.1%|30.9%|43.1%|26.5%|76.9%|67.1%|18.8%|1.5|7.8%|9.2%|12.3%|67.2%|39.1%|37.5%|33.9%|48.6%|53.3%|66.3%|35.8%|40.1%|34.5%|37.3%|33.2%|7.9|2.5|56.0%|2.4|36.3%|12.4|2.0|51.0%|3.6|40.2%|14.2|3.3|50.7%|4.4|34.6%
+DAL|111.5|108.9|+2.6|79.2|15.3s|52.0%|55.8%|25.4%|33.8%|25.3%|75.7%|65.9%|19.5%|2.0|8.5%|8.0%|9.6%|66.4%|40.2%|46.2%|33.7%|35.9%|31.3%|66.0%|36.1%|48.4%|43.5%|35.7%|32.8%|11.8|3.3|59.9%|2.6|35.7%|11.7|2.1|50.0%|2.4|30.1%|15.2|3.4|50.7%|3.4|33.9%
+GSV|111.1|101.4|+9.7|75.0|17.0s|50.7%|54.9%|28.3%|45.1%|27.0%|74.2%|66.1%|18.1%|1.8|10.5%|10.0%|9.9%|62.7%|41.6%|34.3%|35.2%|31.3%|43.2%|62.3%|39.6%|40.8%|35.7%|34.9%|35.0%|6.6|1.5|57.2%|1.6|36.7%|11.7|2.3|42.8%|4.4|35.6%|16.6|4.0|44.8%|5.8|36.0%
+ATL|110.1|105.4|+4.8|80.7|14.9s|49.4%|54.7%|35.6%|37.5%|31.6%|79.1%|67.4%|17.9%|1.6|10.9%|8.1%|11.2%|58.2%|37.2%|23.5%|31.2%|44.9%|25.8%|57.5%|34.8%|35.5%|30.0%|30.7%|32.3%|12.0|2.6|58.1%|3.5|50.6%|14.5|2.3|45.3%|2.9|28.4%|18.1|3.9|43.4%|5.6|35.6%
+TOR|107.9|115.6|-7.7|80.7|14.5s|52.2%|57.0%|30.5%|41.6%|24.9%|69.6%|66.3%|18.1%|1.4|8.8%|7.3%|12.6%|61.8%|39.8%|37.4%|35.5%|35.8%|35.7%|61.1%|40.4%|35.1%|32.5%|38.1%|33.6%|10.3|2.6|63.2%|2.7|45.5%|11.0|1.8|48.9%|3.1|35.1%|15.1|3.8|49.5%|4.5|36.3%
+PDX|107.8|112.8|-4.9|79.3|15.2s|52.8%|56.9%|27.2%|42.9%|24.2%|70.1%|67.1%|18.6%|1.4|9.3%|8.8%|12.9%|62.1%|43.7%|37.1%|34.7%|31.7%|43.5%|61.6%|41.9%|40.9%|43.5%|37.8%|31.6%|8.1|2.1|52.4%|2.1|31.6%|9.9|2.0|43.3%|2.9|32.1%|16.8|4.0|50.6%|4.5|32.1%
+LAS|106.2|112.8|-6.6|81.8|14.4s|52.9%|56.9%|28.7%|38.9%|22.7%|71.2%|68.9%|19.3%|1.5|9.4%|7.3%|12.5%|67.1%|41.3%|39.3%|33.3%|38.1%|28.6%|66.5%|38.7%|39.9%|41.4%|34.7%|32.1%|8.9|2.4|55.7%|1.9|33.3%|10.5|1.5|49.6%|1.2|18.9%|16.1|3.9|48.1%|4.6|33.5%
+PHX|105.5|110.7|-5.2|79.5|14.9s|50.3%|55.6%|35.9%|37.2%|20.7%|76.0%|68.8%|18.3%|1.5|9.1%|8.0%|12.1%|67.8%|39.5%|34.8%|31.6%|39.0%|30.8%|67.2%|39.9%|33.3%|32.8%|33.1%|31.7%|10.5|2.6|59.0%|2.6|36.9%|8.6|1.4|43.4%|1.3|20.3%|15.4|3.3|47.4%|3.6|32.8%
+CHI|105.4|107.7|-2.3|82.3|14.1s|49.7%|54.5%|34.1%|33.0%|22.6%|72.7%|69.1%|18.7%|1.7|8.9%|10.0%|11.1%|58.3%|39.4%|37.4%|32.7%|34.6%|27.3%|57.8%|37.8%|37.4%|37.8%|30.5%|35.3%|9.9|2.6|57.5%|1.9|37.3%|10.3|1.8|43.5%|2.8|35.5%|15.1|3.5|45.4%|3.3|31.4%
+SEA|103.0|110.2|-7.2|81.1|14.7s|49.2%|53.7%|27.8%|38.1%|24.3%|72.0%|65.1%|17.4%|1.4|9.4%|10.5%|12.7%|62.1%|41.3%|31.7%|32.7%|33.3%|30.8%|61.4%|40.9%|35.1%|34.7%|32.2%|33.0%|9.1|2.1|59.7%|1.8|36.7%|11.1|1.9|45.4%|2.4|29.0%|15.7|3.5|48.3%|4.5|34.8%
+WAS|102.1|102.8|-0.7|78.1|15.6s|48.7%|53.5%|38.1%|29.8%|31.3%|77.5%|66.7%|17.4%|1.3|7.1%|9.0%|13.7%|62.6%|36.0%|32.6%|28.7%|42.1%|27.6%|60.6%|35.5%|32.6%|33.3%|31.9%|27.4%|6.3|1.2|55.9%|1.1|37.5%|12.1|1.8|46.5%|1.2|19.4%|13.9|3.1|48.4%|2.7|33.7%
+CON|98.6|108.1|-9.5|79.0|14.8s|46.9%|51.0%|32.0%|28.0%|27.3%|75.3%|65.4%|17.2%|1.4|10.0%|11.5%|12.5%|59.8%|35.4%|36.6%|29.7%|33.3%|30.8%|58.9%|34.1%|38.1%|37.1%|32.2%|27.2%|7.8|1.6|51.0%|0.9|20.4%|11.1|1.7|44.7%|2.3|32.1%|15.6|3.5|44.0%|3.1|28.8%`;
+
+const teamCols = [
+  { key:"ORtg", label:"ORtg", full:"Offensive Rating", dir:"high" },
+  { key:"DRtg", label:"DRtg", full:"Defensive Rating", dir:"low" },
+  { key:"NetRtg", label:"Net", full:"Net Rating", dir:"high" },
+  { key:"Pace", label:"Pace", full:"Pace", dir:"neutral" },
+  { key:"PossDur", label:"Poss Dur", full:"Avg Possession Duration", dir:"neutral" },
+  { key:"eFG", label:"eFG%", full:"Effective FG%", dir:"high" },
+  { key:"TS", label:"TS%", full:"True Shooting %", dir:"high" },
+  { key:"FTr", label:"FTr", full:"Free Throw Rate", dir:"neutral" },
+  { key:"3PAr", label:"3PAr", full:"Three Point Rate", dir:"neutral" },
+  { key:"OREB", label:"OREB%", full:"Offensive Rebound %", dir:"high" },
+  { key:"DREB", label:"DREB%", full:"Defensive Rebound %", dir:"high" },
+  { key:"AST", label:"AST%", full:"Assist %", dir:"high" },
+  { key:"ASTRatio", label:"AST Rt", full:"Assist Ratio", dir:"high" },
+  { key:"ASTTOV", label:"AST/TO", full:"Assist to Turnover Ratio", dir:"high" },
+  { key:"STL", label:"STL%", full:"Steal %", dir:"high" },
+  { key:"BLK", label:"BLK%", full:"Block %", dir:"high" },
+  { key:"TOVRatio", label:"TOV Rt", full:"Turnover Ratio", dir:"low" },
+  { key:"RA_FG", label:"RA FG%", full:"Restricted Area FG%", dir:"high" },
+  { key:"PaintFG", label:"Paint FG%", full:"Paint (Non-RA) FG%", dir:"high" },
+  { key:"MidRangeFG", label:"Mid-Rng FG%", full:"Mid-Range FG%", dir:"high" },
+  { key:"AB3FG", label:"AB3 FG%", full:"Above the Break 3 FG%", dir:"high" },
+  { key:"LC3FG", label:"LC3 FG%", full:"Left Corner 3 FG%", dir:"high" },
+  { key:"RC3FG", label:"RC3 FG%", full:"Right Corner 3 FG%", dir:"high" },
+  { key:"FG0_4", label:"0-4ft FG%", full:"FG% (0-4 ft)", dir:"high" },
+  { key:"FG5_9", label:"5-9ft FG%", full:"FG% (5-9 ft)", dir:"high" },
+  { key:"FG10_14", label:"10-14ft FG%", full:"FG% (10-14 ft)", dir:"high" },
+  { key:"FG15_19", label:"15-19ft FG%", full:"FG% (15-19 ft)", dir:"high" },
+  { key:"FG20_24", label:"20-24ft FG%", full:"FG% (20-24 ft)", dir:"high" },
+  { key:"FG25plus", label:"25+ft FG%", full:"FG% (25+ ft)", dir:"high" },
+  { key:"FBPts", label:"FB Pts", full:"Fast Break Points", dir:"high" },
+  { key:"FBAst", label:"FB Ast", full:"Fast Break Assists", dir:"high" },
+  { key:"FBFG", label:"FB FG%", full:"Fast Break FG%", dir:"high" },
+  { key:"FB3Pts", label:"FB 3PT Pts", full:"Fast Break 3PT Points", dir:"high" },
+  { key:"FB3FG", label:"FB 3PT%", full:"Fast Break 3PT%", dir:"high" },
+  { key:"SCPts", label:"2ndCh Pts", full:"Second Chance Points", dir:"high" },
+  { key:"SCAst", label:"2ndCh Ast", full:"Second Chance Assists", dir:"high" },
+  { key:"SCFG", label:"2ndCh FG%", full:"Second Chance FG%", dir:"high" },
+  { key:"SC3Pts", label:"2ndCh 3PT Pts", full:"Second Chance 3PT Points", dir:"high" },
+  { key:"SC3FG", label:"2ndCh 3PT%", full:"Second Chance 3PT%", dir:"high" },
+  { key:"POT", label:"Pts off TO", full:"Points Off Turnovers", dir:"high" },
+  { key:"OTAst", label:"Ast off TO", full:"Assists off Turnovers", dir:"high" },
+  { key:"OTFG", label:"OffTO FG%", full:"Off Turnover FG%", dir:"high" },
+  { key:"OT3Pts", label:"OffTO 3PT Pts", full:"Off Turnover 3PT Points", dir:"high" },
+  { key:"OT3FG", label:"OffTO 3PT%", full:"Off Turnover 3PT%", dir:"high" }
+];
+
+const teamFullNames = {};
+standings.forEach(t => { teamFullNames[t.code] = t.name; });
+
+const teamAdvancedStats = teamStatsRaw.trim().split("\n").map(line => {
+  const parts = line.split("|");
+  const code = parts[0];
+  const vals = parts.slice(1);
+  const team = { code, name: teamFullNames[code] || code };
+  teamCols.forEach((col, i) => {
+    const raw = vals[i];
+    team[col.key] = raw === undefined ? null : parseFloat(raw.replace("%", "").replace("+", "").replace("s", ""));
+    team[col.key + "_display"] = raw;
+  });
+  return team;
+});
+
+teamCols.forEach(col => {
+  const dirMult = col.dir === "low" ? 1 : -1; // low: ascending (rank 1 = smallest); otherwise descending (rank 1 = largest)
+  const ranked = teamAdvancedStats
+    .filter(t => t[col.key] !== null)
+    .slice()
+    .sort((a, b) => (a[col.key] - b[col.key]) * dirMult);
+  let rank = 0;
+  let prevVal = null;
+  ranked.forEach((t, i) => {
+    if (t[col.key] !== prevVal) { rank = i + 1; prevVal = t[col.key]; }
+    t[col.key + "_rank"] = rank;
+  });
+});
+
+function ordinal(n) {
+  const s = ["th", "st", "nd", "rd"];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+}
+
+let teamSortKey = "ORtg";
+let teamSortDir = -1;
+
+function renderTeamAdvancedHead() {
+  const head = document.getElementById("team-advanced-head");
+  let html = `<th class="rank-col">#</th><th class="player-col sortable" data-key="name">Team</th>`;
+  teamCols.forEach(col => {
+    html += `<th class="num sortable" data-key="${col.key}">${col.label}</th>`;
+  });
+  head.innerHTML = html;
+  head.querySelectorAll(".sortable").forEach(th => {
+    th.addEventListener("click", () => {
+      const key = th.dataset.key;
+      if (teamSortKey === key) { teamSortDir *= -1; } else { teamSortKey = key; teamSortDir = key === "name" ? 1 : -1; }
+      renderTeamAdvancedBody();
+      head.querySelectorAll("th").forEach(h => h.classList.remove("sorted"));
+      th.classList.add("sorted");
+    });
+  });
+}
+
+function renderTeamAdvancedBody() {
+  const body = document.getElementById("team-advanced-body");
+  let rows = teamAdvancedStats.slice().sort((a, b) => {
+    if (teamSortKey === "name") {
+      return a.name.localeCompare(b.name) * teamSortDir;
+    }
+    let av = a[teamSortKey], bv = b[teamSortKey];
+    if (av === null) return 1;
+    if (bv === null) return -1;
+    return (av - bv) * teamSortDir;
+  });
+  body.innerHTML = rows.map((t, i) => {
+    let cells = `<td class="rank-col">${i + 1}</td><td class="player-col"><div class="team-cell">${logo(t.code, "sm")}${t.name}</div></td>`;
+    teamCols.forEach(col => {
+      cells += `<td class="num">${t[col.key + "_display"] ?? "-"}</td>`;
+    });
+    return `<tr>${cells}</tr>`;
+  }).join("");
+}
+
+renderTeamAdvancedHead();
+renderTeamAdvancedBody();
+document.querySelector('#team-advanced-head th[data-key="ORtg"]').classList.add("sorted");
+
+// ---- Team Comparison ----
+const teamRecords = {};
+standings.forEach(t => { teamRecords[t.code] = `${t.w}-${t.l}`; });
+
+const teamByCode = {};
+teamAdvancedStats.forEach(t => { teamByCode[t.code] = t; });
+
+const teamAOrder = standings.map(t => t.code);
+const selectA = document.getElementById("compare-team-a");
+const selectB = document.getElementById("compare-team-b");
+teamAOrder.forEach(code => {
+  const t = teamByCode[code];
+  if (!t) return;
+  selectA.innerHTML += `<option value="${code}">${t.name}</option>`;
+  selectB.innerHTML += `<option value="${code}">${t.name}</option>`;
+});
+selectA.value = teamAOrder[0];
+selectB.value = teamAOrder[1] || teamAOrder[0];
+
+function renderCompare() {
+  const codeA = selectA.value;
+  const codeB = selectB.value;
+  const a = teamByCode[codeA];
+  const b = teamByCode[codeB];
+  const result = document.getElementById("compare-result");
+  if (!a || !b) { result.innerHTML = ""; return; }
+
+  let html = `
+    <div class="compare-header">
+      <div class="compare-team-header a">
+        ${logo(a.code)}
+        <div class="ct-name">${a.name}</div>
+        <div class="ct-rec">${teamRecords[a.code] || ""}</div>
+      </div>
+      <div class="compare-mid">VS</div>
+      <div class="compare-team-header b">
+        ${logo(b.code)}
+        <div class="ct-name">${b.name}</div>
+        <div class="ct-rec">${teamRecords[b.code] || ""}</div>
+      </div>
+    </div>
+  `;
+
+  teamCols.forEach(col => {
+    const av = a[col.key], bv = b[col.key];
+    const aDisplay = a[col.key + "_display"] ?? "-";
+    const bDisplay = b[col.key + "_display"] ?? "-";
+    const aRank = a[col.key + "_rank"];
+    const bRank = b[col.key + "_rank"];
+    let aWin = false, bWin = false;
+    if (col.dir !== "neutral" && av !== null && bv !== null && av !== bv) {
+      if (col.dir === "high") { aWin = av > bv; bWin = bv > av; }
+      else { aWin = av < bv; bWin = bv < av; }
+    }
+    html += `
+      <div class="compare-row">
+        <div class="compare-val a ${aWin ? "win" : ""}">
+          <span class="cv-num">${aDisplay}</span>
+          ${aRank ? `<span class="cv-rank">${ordinal(aRank)} of 15</span>` : ""}
+        </div>
+        <div class="compare-label">${col.full}</div>
+        <div class="compare-val b ${bWin ? "win" : ""}">
+          <span class="cv-num">${bDisplay}</span>
+          ${bRank ? `<span class="cv-rank">${ordinal(bRank)} of 15</span>` : ""}
+        </div>
+      </div>
+    `;
+  });
+
+  result.innerHTML = html;
+}
+
+selectA.addEventListener("change", renderCompare);
+selectB.addEventListener("change", renderCompare);
+renderCompare();
+
+// ---- Jump Balls ----
+const jumpBallsRaw = `jonquel-jones|Jonquel Jones|NYL|0.9|67.4%
+shakira-austin|Shakira Austin|WAS|0.9|63.8%
+aliyah-boston|Aliyah Boston|IND|0.9|65.1%
+kamilla-cardoso|Kamilla Cardoso|CHI|0.9|66.0%
+dominique-malonga|Dominique Malonga|SEA|0.9|65.8%
+angel-reese|Angel Reese|ATL|0.8|58.7%
+kiah-stokes|Kiah Stokes|GSV|0.7|48.8%
+nalyssa-smith|NaLyssa Smith|LVA|0.7|49.0%
+dearica-hamby|Dearica Hamby|LAS|0.5|40.0%
+natasha-mack|Natasha Mack|PHX|0.5|46.4%
+olivia-nelson-ododa|Olivia Nelson-Ododa|CON|0.5|87.5%
+dewanna-bonner|DeWanna Bonner|PHX|0.4|51.9%
+natasha-howard|Natasha Howard|MIN|0.4|31.4%
+megan-gustafson|Megan DiLeo|PDX|0.4|35.1%
+nneka-ogwumike|Nneka Ogwumike|LAS|0.3|-
+awak-kuier|Awak Kuier|DAL|0.3|38.1%
+nyara-sabally|Nyara Sabally|TOR|0.3|26.9%
+aneesah-morrow|Aneesah Morrow|CON/TOR|0.3|58.3%
+stefanie-dolson|Stefanie Dolson|SEA|0.2|-
+elizabeth-williams|Elizabeth Williams|CHI|0.2|-
+breanna-stewart|Breanna Stewart|NYL|0.2|-
+azura-stevens|Azura Stevens|CHI|0.2|-
+aja-wilson|A'ja Wilson|LVA|0.2|-
+jackie-young|Jackie Young|LVA|0.2|-
+alanna-smith|Alanna Smith|DAL|0.2|35.3%
+kennedy-burke|Kennedy Burke|CON|0.2|-
+michaela-onyenwere|Michaela Onyenwere|WAS|0.2|-
+veronica-burton|Veronica Burton|GSV|0.2|-
+rhyne-howard|Rhyne Howard|ATL|0.2|-
+emily-engstler|Emily Engstler|PDX|0.2|-
+kiki-iriafen|Kiki Iriafen|WAS|0.2|-
+makayla-timpson|Makayla Timpson|IND|0.2|-
+laura-juskaite|Laura Juskaite|TOR|0.2|-
+serah-williams|Serah Williams|PDX|0.2|-
+tiffany-hayes|Tiffany Hayes|GSV|0.1|-
+kayla-mcbride|Kayla McBride|MIN|0.1|-
+kayla-thornton|Kayla Thornton|GSV|0.1|-
+kahleah-copper|Kahleah Copper|PHX|0.1|-
+nia-coffey|Nia Coffey|MIN|0.1|-
+cecilia-zandalasini|Cecilia Zandalasini|GSV|0.1|-
+ariel-atkins|Ariel Atkins|LAS|0.1|-
+monique-billings|Monique Billings|IND|0.1|-
+jordin-canada|Jordin Canada|ATL|0.1|-
+gabby-williams|Gabby Williams|GSV|0.1|-
+katie-lou-samuelson|Katie Lou Samuelson|SEA|0.1|-
+sophie-cunningham|Sophie Cunningham|IND|0.1|-
+jessica-shepard|Jessica Shepard|DAL|0.1|-
+bridget-carleton|Bridget Carleton|PDX|0.1|-
+xu-han|Han Xu|NYL|0.1|-
+natisha-hiedeman|Natisha Hiedeman|SEA|0.1|-
+li-yueru|Li Yueru|DAL|0.1|-
+kaila-charles|Kaila Charles|GSV|0.1|-
+naz-hillmon|Naz Hillmon|ATL|0.1|-
+pauline-astier|Pauline Astier|NYL|0.1|-
+jade-melbourne|Jade Melbourne|SEA|0.1|-
+diamond-miller|Diamond Miller|CON|0.1|-
+jordan-horston|Jordan Horston|SEA|0.1|-
+maddy-siegrist|Maddy Siegrist|DAL|0.1|-
+laeticia-amihere|Laeticia Amihere|GSV|0.1|-
+cameron-brink|Cameron Brink|LAS|0.1|-
+nyadiew-puoch|Nyadiew Puoch|PDX|0.1|-
+sydney-taylor|Sydney Taylor|CHI|0.1|-
+janelle-salaun|Janelle Salaun|GSV|0.1|-
+paige-bueckers|Paige Bueckers|DAL|0.1|-
+sonia-citron|Sonia Citron|WAS|0.1|-
+anastasiia-olairi-kosu|Anastasiia Olairi Kosu|MIN|0.1|-
+saniya-rivers|Saniya Rivers|CON|0.1|-
+azzi-fudd|Azzi Fudd|DAL|0.1|-
+olivia-miles|Olivia Miles|MIN|0.1|-
+lauren-betts|Lauren Betts|WAS|0.1|-
+flaujae-johnson|Flau'jae Johnson|SEA|0.1|-
+madina-okot|Madina Okot|ATL|0.1|-
+raegan-beers|Raegan Beers|CON|0.1|-
+awa-fam|Awa Fam|SEA|0.1|-
+gabriela-jaquez|Gabriela Jaquez|CHI|0.1|-
+cassandre-prosper|Cassandre Prosper|WAS|0.1|-
+rebekah-gardner|Rebekah Gardner|NYL|0.0|-
+odyssey-sims|Odyssey Sims|DAL|0.0|-
+alyssa-thomas|Alyssa Thomas|PHX|0.0|-
+chelsea-gray|Chelsea Gray|LVA|0.0|-
+stephanie-talbot|Stephanie Talbot|LVA|0.0|-
+jewell-loyd|Jewell Loyd|LVA|0.0|-
+natasha-cloud|Natasha Cloud|CHI|0.0|-
+erica-wheeler|Erica Wheeler|LAS|0.0|-
+valeriane-ayayi|Valeriane Ayayi|PHX|0.0|-
+rachel-banham|Rachel Banham|CHI|0.0|-
+courtney-williams|Courtney Williams|MIN|0.0|-
+julie-allemand|Julie Allemand|TOR|0.0|-
+allisha-gray|Allisha Gray|ATL|0.0|-
+myisha-hines-allen|Myisha Hines-Allen|IND|0.0|-
+kelsey-mitchell|Kelsey Mitchell|IND|0.0|-
+kia-nurse|Kia Nurse|TOR|0.0|-
+arike-ogunbowale|Arike Ogunbowale|DAL|0.0|-
+brianna-turner|Brianna Turner|LVA|0.0|-
+marina-mabrey|Marina Mabrey|TOR|0.0|-
+marine-johannes|Marine Johannes|NYL|0.0|-
+maria-conde|Maria Conde|TOR|0.0|-
+tyasha-harris|Tyasha Harris|IND|0.0|-
+jihyun-park|Jihyun Park|LAS|0.0|-
+maya-caldwell|Maya Caldwell|MIN|0.0|-
+rae-burrell|Rae Burrell|LAS|0.0|-
+sika-kone|Sika Kone|ATL|0.0|-
+lexie-hull|Lexie Hull|IND|0.0|-
+lexi-held|Lexi Held|TOR/PHX|0.0|-
+zia-cooke|Zia Cooke|SEA|0.0|-
+caitlin-clark|Caitlin Clark|IND|0.0|-
+jacy-sheldon|Jacy Sheldon|CHI|0.0|-
+isobel-borlase|Isobel Borlase|ATL|0.0|-
+leila-lacan|Leila Lacan|CON|0.0|-
+carla-leite|Carla Leite|PDX|0.0|-
+georgia-amoore|Georgia Amoore|WAS|0.0|-
+sarah-ashlee-barker|Sarah Ashlee Barker|PDX|0.0|-
+aziaha-james|Aziaha James|DAL|0.0|-
+te-hina-paopao|Te-Hina Paopao|ATL|0.0|-
+kaitlyn-chen|Kaitlyn Chen|GSV|0.0|-
+gianna-kneepkens|Gianna Kneepkens|CON|0.0|-
+cotie-mcmahon|Cotie McMahon|WAS|0.0|-
+raven-johnson|Raven Johnson|IND|0.0|-
+nell-angloma|Nell Angloma|CON|0.0|-
+charlisse-leger-walker|Charlisse Leger-Walker|CON|0.0|-
+angela-dugalic|Angela Dugalic|WAS|0.0|-
+teonni-key|Teonni Key|TOR|0.0|-
+chance-gray|Chance Gray|LAS|0.0|-
+antonia-delaere|Antonia Delaere|MIN|0.0|-
+noemie-brochant|Noemie Brochant|PHX|0.0|-
+frieda-buhner|Frieda Buhner|PDX|0.0|-
+teja-oblak|Teja Oblak|PDX|0.0|-
+alicia-florez-getino|Alicia Florez|WAS|0.0|-
+brittney-griner|Brittney Griner|CON|-|87.0%
+isabelle-harrison|Isabelle Harrison|TOR|-|57.9%`;
+
+// Early offense frequency: share of a player's possessions that come in the first 8 seconds
+// of a dead-ball restart (inbound after made basket/FT/whistle) — the closest published proxy
+// for "gets an early shot," since no site tracks shots specifically off the opening jump ball.
+const earlyOffenseFreqRaw = `jordin-canada|9.7%
+tyasha-harris|9.2%
+erica-wheeler|8.0%
+caitlin-clark|8.0%
+jade-melbourne|7.8%
+lexie-hull|7.3%
+pauline-astier|7.3%
+charlisse-leger-walker|7.3%
+kelsey-mitchell|7.0%
+serah-williams|6.8%
+natasha-cloud|6.6%
+sonia-citron|6.2%
+sydney-taylor|6.0%
+cameron-brink|5.8%
+carla-leite|5.7%
+te-hina-paopao|5.4%
+ariel-atkins|5.3%
+marina-mabrey|5.3%
+kia-nurse|5.1%
+saniya-rivers|5.1%
+jewell-loyd|5.0%
+leila-lacan|5.0%
+aziaha-james|5.0%
+teja-oblak|5.0%
+kahleah-copper|4.9%
+stefanie-dolson|4.7%
+olivia-miles|4.7%
+rachel-banham|4.6%
+bridget-carleton|4.6%
+natisha-hiedeman|4.6%
+diamond-miller|4.6%
+isobel-borlase|4.5%
+kaitlyn-chen|4.5%
+raven-johnson|4.5%
+chelsea-gray|4.4%
+julie-allemand|4.4%
+nia-coffey|4.4%
+allisha-gray|4.4%
+rhyne-howard|4.2%
+tiffany-hayes|4.1%
+paige-bueckers|4.1%
+elizabeth-williams|4.0%
+kennedy-burke|4.0%
+kayla-mcbride|3.9%
+laura-juskaite|3.9%
+gabriela-jaquez|3.9%
+monique-billings|3.8%
+azura-stevens|3.8%
+maya-caldwell|3.8%
+zia-cooke|3.8%
+cassandre-prosper|3.8%
+alicia-florez-getino|3.8%
+maria-conde|3.6%
+veronica-burton|3.6%
+aneesah-morrow|3.6%
+rebekah-gardner|3.5%
+katie-lou-samuelson|3.5%
+jackie-young|3.5%
+nneka-ogwumike|3.4%
+sophie-cunningham|3.4%
+naz-hillmon|3.4%
+nell-angloma|3.4%
+georgia-amoore|3.3%
+breanna-stewart|3.2%
+gabby-williams|3.2%
+emily-engstler|3.2%
+aliyah-boston|3.2%
+sarah-ashlee-barker|3.1%
+angel-reese|3.0%
+janelle-salaun|3.0%
+jordan-horston|2.9%
+rae-burrell|2.8%
+jacy-sheldon|2.8%
+dominique-malonga|2.8%
+courtney-williams|2.7%
+makayla-timpson|2.7%
+valeriane-ayayi|2.6%
+myisha-hines-allen|2.6%
+arike-ogunbowale|2.6%
+lexi-held|2.6%
+azzi-fudd|2.6%
+marine-johannes|2.5%
+natasha-howard|2.4%
+kamilla-cardoso|2.4%
+madina-okot|2.4%
+jessica-shepard|2.3%
+kayla-thornton|2.2%
+michaela-onyenwere|2.2%
+nyara-sabally|2.2%
+dewanna-bonner|2.1%
+dearica-hamby|2.1%
+flaujae-johnson|2.1%
+awa-fam|2.1%
+alyssa-thomas|2.0%
+aja-wilson|2.0%
+kiki-iriafen|2.0%
+angela-dugalic|2.0%
+megan-gustafson|1.8%
+cotie-mcmahon|1.7%
+natasha-mack|1.6%
+shakira-austin|1.6%
+noemie-brochant|1.6%
+kiah-stokes|1.5%
+jonquel-jones|1.5%
+nalyssa-smith|1.5%
+kaila-charles|1.4%
+nyadiew-puoch|1.4%
+maddy-siegrist|1.3%
+olivia-nelson-ododa|1.2%
+cecilia-zandalasini|1.1%
+alanna-smith|1.1%
+awak-kuier|0.6%
+frieda-buhner|0.6%
+lauren-betts|0.5%
+xu-han|0.0%
+laeticia-amihere|0.0%`;
+
+const earlyOffenseFreq = {};
+earlyOffenseFreqRaw.trim().split("\n").forEach(line => {
+  const [slug, val] = line.split("|");
+  earlyOffenseFreq[slug] = val;
+});
+
+const jumpBallsStats = jumpBallsRaw.trim().split("\n").map(line => {
+  const [slug, name, team, jbwRaw, jbwPctRaw] = line.split("|");
+  const eoRaw = earlyOffenseFreq[slug];
+  return {
+    slug, name, team,
+    jbw: jbwRaw === "-" ? null : parseFloat(jbwRaw),
+    jbw_display: jbwRaw === "-" ? "-" : jbwRaw,
+    jbwPct: jbwPctRaw === "-" ? null : parseFloat(jbwPctRaw.replace("%", "")),
+    jbwPct_display: jbwPctRaw,
+    eoFreq: eoRaw ? parseFloat(eoRaw.replace("%", "")) : null,
+    eoFreq_display: eoRaw || "-"
+  };
+});
+
+let jbSortKey = "jbw";
+let jbSortDir = -1;
+let jbFilter = "";
+
+function renderJumpBallsHead() {
+  const head = document.getElementById("jumpballs-head");
+  head.innerHTML = `<th class="rank-col">#</th><th class="player-col sortable" data-key="name">Player</th><th class="sortable" data-key="team">Team</th><th class="num sortable" data-key="jbw">Jumps Won</th><th class="num sortable" data-key="jbwPct">Win %</th><th class="num sortable" data-key="eoFreq">Early Off Freq%</th>`;
+  head.querySelectorAll(".sortable").forEach(th => {
+    th.addEventListener("click", () => {
+      const key = th.dataset.key;
+      if (jbSortKey === key) { jbSortDir *= -1; } else { jbSortKey = key; jbSortDir = key === "name" || key === "team" ? 1 : -1; }
+      renderJumpBallsBody();
+      head.querySelectorAll("th").forEach(h => h.classList.remove("sorted"));
+      th.classList.add("sorted");
+    });
+  });
+}
+
+function renderJumpBallsBody() {
+  const body = document.getElementById("jumpballs-body");
+  const q = jbFilter.trim().toLowerCase();
+  let rows = jumpBallsStats.filter(p => !q || p.name.toLowerCase().includes(q) || p.team.toLowerCase().includes(q));
+  rows = rows.slice().sort((a, b) => {
+    if (jbSortKey === "name" || jbSortKey === "team") {
+      return a[jbSortKey].localeCompare(b[jbSortKey]) * jbSortDir;
+    }
+    let av = a[jbSortKey], bv = b[jbSortKey];
+    if (av === null) return 1;
+    if (bv === null) return -1;
+    return (av - bv) * jbSortDir;
+  });
+  document.getElementById("jb-result-count").textContent = q ? `${rows.length} of ${jumpBallsStats.length} players` : `${jumpBallsStats.length} players`;
+  body.innerHTML = rows.map((p, i) => {
+    return `<tr><td class="rank-col">${i + 1}</td><td class="player-col">${p.name}</td><td>${logo(p.team.split("/")[0], "sm")}${p.team}</td><td class="num">${p.jbw_display}</td><td class="num">${p.jbwPct_display}</td><td class="num">${p.eoFreq_display}</td></tr>`;
+  }).join("");
+}
+
+renderJumpBallsHead();
+renderJumpBallsBody();
+document.querySelector('#jumpballs-head th[data-key="jbw"]').classList.add("sorted");
+
+document.getElementById("jb-search").addEventListener("input", (e) => {
+  jbFilter = e.target.value;
+  renderJumpBallsBody();
+});
+
+document.querySelectorAll(".tab-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+    document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+    btn.classList.add("active");
+    document.getElementById("panel-" + btn.dataset.tab).classList.add("active");
+  });
+});
+</script>
+</body>
+</html>
