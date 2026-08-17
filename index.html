@@ -2,8 +2,19 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<script>
+// Apply saved/system theme before first paint to avoid a flash of the wrong theme.
+(function () {
+  try {
+    var t = localStorage.getItem("wnba-dashboard-theme");
+    if (!t) t = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    document.documentElement.setAttribute("data-theme", t);
+  } catch (e) {}
+})();
+</script>
 <style>
   :root { color-scheme: light; }
+  :root[data-theme="dark"] { color-scheme: dark; }
   * { box-sizing: border-box; }
   body {
     margin: 0;
@@ -23,7 +34,25 @@
     gap: 8px;
   }
   h1 { font-size: 22px; margin: 0; }
+  .header-right { display: flex; align-items: center; gap: 10px; }
   .source-note { font-size: 12px; color: #999; }
+  .theme-toggle {
+    appearance: none;
+    border: 1px solid #e5e5e7;
+    background: #ffffff;
+    border-radius: 8px;
+    width: 30px;
+    height: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+    padding: 0;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .theme-toggle:hover { border-color: #ff6b35; }
 
   .tabs {
     display: flex;
@@ -324,13 +353,74 @@
   .cv-rank { font-size: 10px; font-weight: 600; color: #bbb; text-transform: uppercase; letter-spacing: 0.03em; }
   .compare-val.win .cv-rank { color: #ff9c73; }
   .compare-label { text-align: center; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: #999; }
+
+  /* ---- Dark mode ---- */
+  :root[data-theme="dark"] body { background: #0f1115; color: #e8e8ea; }
+  :root[data-theme="dark"] .source-note { color: #8b8e96; }
+  :root[data-theme="dark"] .theme-toggle { background: #1a1c22; border-color: #2a2d35; color: #e8e8ea; }
+  :root[data-theme="dark"] .tabs { border-bottom-color: #2a2d35; }
+  :root[data-theme="dark"] .tab-btn { color: #8b8e96; }
+  :root[data-theme="dark"] .day-heading { color: #8b8e96; }
+  :root[data-theme="dark"] .game-card { background: #1a1c22; border-color: #2a2d35; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+  :root[data-theme="dark"] .game-card.has-injury-flag { border-color: #e05c4d; box-shadow: 0 0 0 3px rgba(224,92,77,0.15); }
+  :root[data-theme="dark"] .game-card.has-injury-flag:hover { box-shadow: 0 0 0 3px rgba(224,92,77,0.15), 0 2px 10px rgba(0,0,0,0.3); }
+  :root[data-theme="dark"] .team-record { color: #9a9da5; }
+  :root[data-theme="dark"] .broadcast { color: #8b8e96; }
+  :root[data-theme="dark"] .at { color: #6f727a; }
+  :root[data-theme="dark"] .odds-row { border-top-color: #23252b; }
+  :root[data-theme="dark"] .odds-pill { background: #1f2128; border-color: #2a2d35; color: #c7c9cf; }
+  :root[data-theme="dark"] .odds-pill .odds-label { color: #7d8088; }
+  :root[data-theme="dark"] .odds-note { color: #5c5f66; }
+  :root[data-theme="dark"] .detail-hint { color: #6f727a; border-top-color: #23252b; }
+  :root[data-theme="dark"] .detail-hint.flagged { color: #f2897a; }
+  :root[data-theme="dark"] .game-detail { border-top-color: #23252b; }
+  :root[data-theme="dark"] .detail-section-title { color: #8b8e96; }
+  :root[data-theme="dark"] .injury-item { color: #c7c9cf; }
+  :root[data-theme="dark"] .injury-item .injury-reason { color: #7d8088; }
+  :root[data-theme="dark"] .injury-status.out, :root[data-theme="dark"] .injury-status.doubtful { background: rgba(248,113,113,0.15); color: #f87171; }
+  :root[data-theme="dark"] .injury-status.questionable { background: rgba(251,191,36,0.15); color: #fbbf24; }
+  :root[data-theme="dark"] .injury-status.probable, :root[data-theme="dark"] .injury-status.available { background: rgba(74,222,128,0.15); color: #4ade80; }
+  :root[data-theme="dark"] .injury-empty, :root[data-theme="dark"] .series-empty { color: #6f727a; }
+  :root[data-theme="dark"] .series-summary { color: #e8e8ea; }
+  :root[data-theme="dark"] .series-game { color: #9a9da5; }
+  :root[data-theme="dark"] .series-game .sg-date { color: #7d8088; }
+  :root[data-theme="dark"] table { background: #1a1c22; border-color: #2a2d35; }
+  :root[data-theme="dark"] th { background: #1f2128; color: #8b8e96; border-bottom-color: #23252b; }
+  :root[data-theme="dark"] td { border-bottom-color: #23252b; }
+  :root[data-theme="dark"] .rank { color: #8b8e96; }
+  :root[data-theme="dark"] .badge.clinch { background: rgba(74,222,128,0.15); color: #4ade80; }
+  :root[data-theme="dark"] .badge.elim { background: rgba(248,113,113,0.15); color: #f87171; }
+  :root[data-theme="dark"] .section-title { color: #8b8e96; }
+  :root[data-theme="dark"] .footer { color: #6f727a; }
+  :root[data-theme="dark"] .table-scroll { border-color: #2a2d35; background: #1a1c22; }
+  :root[data-theme="dark"] .stats-table .rank-col { color: #8b8e96; }
+  :root[data-theme="dark"] .stats-table .rank-col, :root[data-theme="dark"] .stats-table .player-col { background: #1a1c22; }
+  :root[data-theme="dark"] .stats-table th.rank-col, :root[data-theme="dark"] .stats-table th.player-col { background: #1f2128; }
+  :root[data-theme="dark"] .stats-table .player-col { box-shadow: 1px 0 0 #2a2d35; }
+  :root[data-theme="dark"] .search-row input { background: #1a1c22; border-color: #2a2d35; color: #e8e8ea; }
+  :root[data-theme="dark"] .search-row .hint { color: #8b8e96; }
+  :root[data-theme="dark"] .qual-note { color: #8b8e96; }
+  :root[data-theme="dark"] .compare-card { background: #1a1c22; border-color: #2a2d35; }
+  :root[data-theme="dark"] .compare-selectors select { background: #1f2128; border-color: #2a2d35; color: #e8e8ea; }
+  :root[data-theme="dark"] .vs-label { color: #6f727a; }
+  :root[data-theme="dark"] .compare-team-header .ct-rec { color: #8b8e96; }
+  :root[data-theme="dark"] .compare-mid { color: #5c5f66; }
+  :root[data-theme="dark"] .compare-row { border-bottom-color: #23252b; }
+  :root[data-theme="dark"] .compare-val { color: #6f727a; }
+  :root[data-theme="dark"] .compare-val.win { color: #e8e8ea; }
+  :root[data-theme="dark"] .compare-val.win .cv-num { background: rgba(255,107,53,0.15); color: #ff8f61; }
+  :root[data-theme="dark"] .cv-rank { color: #6f727a; }
+  :root[data-theme="dark"] .compare-label { color: #8b8e96; }
 </style>
 </head>
 <body>
 <div class="wrap has-advanced">
   <div class="header">
     <h1>WNBA Dashboard</h1>
-    <div class="source-note">Source: hoopsjunkie.io</div>
+    <div class="header-right">
+      <div class="source-note">Source: hoopsjunkie.io</div>
+      <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Toggle dark mode">🌙</button>
+    </div>
   </div>
 
   <div class="tabs">
@@ -1620,6 +1710,25 @@ document.querySelectorAll(".tab-btn").forEach(btn => {
     document.getElementById("panel-" + btn.dataset.tab).classList.add("active");
   });
 });
+
+(function () {
+  var THEME_KEY = "wnba-dashboard-theme";
+  var toggleBtn = document.getElementById("theme-toggle");
+  function currentTheme() {
+    return document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light";
+  }
+  function updateBtn(theme) {
+    toggleBtn.textContent = theme === "dark" ? "☀️" : "🌙";
+    toggleBtn.setAttribute("aria-label", theme === "dark" ? "Switch to light mode" : "Switch to dark mode");
+  }
+  updateBtn(currentTheme());
+  toggleBtn.addEventListener("click", () => {
+    var next = currentTheme() === "dark" ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", next);
+    try { localStorage.setItem(THEME_KEY, next); } catch (e) {}
+    updateBtn(next);
+  });
+})();
 </script>
 </body>
 </html>
