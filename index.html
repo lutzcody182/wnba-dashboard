@@ -12,6 +12,10 @@
   } catch (e) {}
 })();
 </script>
+<!-- Auto-generated daily by .github/workflows/refresh-data.yml. Safe to 404 on first
+     deploy or if opened outside the repo — the dashboard falls back to its embedded
+     snapshot data below when window.LIVE_DATA isn't present. -->
+<script src="data.js" onerror="console.warn('data.js not found — using embedded snapshot data')"></script>
 <style>
   :root { color-scheme: light; }
   :root[data-theme="dark"] { color-scheme: dark; }
@@ -131,6 +135,17 @@
   .tip-time { font-size: 14.5px; font-weight: 700; }
   .broadcast { font-size: 11px; color: #999; margin-top: 2px; }
   .at { color: #bbb; font-size: 12px; }
+  .live-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10.5px; font-weight: 800; letter-spacing: 0.04em; color: #e0392c; margin-bottom: 3px; }
+  .live-badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #e0392c; animation: live-pulse 1.4s ease-in-out infinite; }
+  @keyframes live-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+  .score-line { font-size: 19px; font-weight: 800; letter-spacing: -0.02em; }
+  .score-line.final { color: #444; }
+  .game-status { font-size: 11px; color: #999; margin-top: 1px; }
+  .team-info.winner .team-name { color: #16803c; }
+  .scores-refresh-row { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin: 0 0 10px; font-size: 12px; color: #999; }
+  .scores-refresh-btn { appearance: none; border: 1px solid #e5e5e7; background: #fff; border-radius: 6px; padding: 4px 10px; font-size: 12px; cursor: pointer; color: #555; }
+  .scores-refresh-btn:hover { border-color: #ff6b35; color: #ff6b35; }
+  .scores-refresh-btn:disabled { opacity: 0.5; cursor: default; }
 
   .odds-row {
     display: flex;
@@ -367,6 +382,13 @@
   :root[data-theme="dark"] .team-record { color: #9a9da5; }
   :root[data-theme="dark"] .broadcast { color: #8b8e96; }
   :root[data-theme="dark"] .at { color: #6f727a; }
+  :root[data-theme="dark"] .live-badge { color: #f2897a; }
+  :root[data-theme="dark"] .live-badge::before { background: #f2897a; }
+  :root[data-theme="dark"] .score-line.final { color: #c7c9cf; }
+  :root[data-theme="dark"] .game-status { color: #8b8e96; }
+  :root[data-theme="dark"] .team-info.winner .team-name { color: #4ade80; }
+  :root[data-theme="dark"] .scores-refresh-row { color: #8b8e96; }
+  :root[data-theme="dark"] .scores-refresh-btn { background: #1a1c22; border-color: #2a2d35; color: #c7c9cf; }
   :root[data-theme="dark"] .odds-row { border-top-color: #23252b; }
   :root[data-theme="dark"] .odds-pill { background: #1f2128; border-color: #2a2d35; color: #c7c9cf; }
   :root[data-theme="dark"] .odds-pill .odds-label { color: #7d8088; }
@@ -418,7 +440,7 @@
   <div class="header">
     <h1>WNBA Dashboard</h1>
     <div class="header-right">
-      <div class="source-note">Source: hoopsjunkie.io</div>
+      <div class="source-note" id="source-note">Source: hoopsjunkie.io</div>
       <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Toggle dark mode">🌙</button>
     </div>
   </div>
@@ -432,6 +454,10 @@
   </div>
 
   <div class="tab-panel active" id="panel-schedule">
+    <div class="scores-refresh-row">
+      <span id="scores-updated-note">Scores via ESPN &middot; live games auto-refresh</span>
+      <button id="scores-refresh-btn" class="scores-refresh-btn" type="button">Refresh scores</button>
+    </div>
     <div id="schedule-body"></div>
   </div>
 
@@ -594,7 +620,9 @@ const schedule = [
   ]}
 ];
 
-const standings = [
+// Falls back to this embedded snapshot if data.js (auto-refreshed daily via GitHub
+// Actions — see .github/workflows/refresh-data.yml) hasn't loaded or found nothing new.
+const standings = (window.LIVE_DATA && window.LIVE_DATA.standings) || [
   {rank:1, code:"MIN", name:"Minnesota Lynx", w:29, l:7, pct:".806", flag:"x"},
   {rank:2, code:"GSV", name:"Golden State Valkyries", w:24, l:9, pct:".727", flag:""},
   {rank:3, code:"LVA", name:"Las Vegas Aces", w:24, l:12, pct:".667", flag:""},
@@ -699,6 +727,26 @@ function hasInjuryReport(text) {
   return !NO_INJURY_REPORT_TEXT.includes(text);
 }
 
+// ---- Live / box scores (ESPN scoreboard API) ----
+// Maps our internal team codes to ESPN's own team abbreviations, which differ for a few teams.
+const ESPN_ABBR = {
+  ATL:"ATL", CHI:"CHI", CON:"CON", DAL:"DAL", GSV:"GS", IND:"IND", LVA:"LV", LAS:"LA",
+  MIN:"MIN", NYL:"NY", PHX:"PHX", PDX:"POR", SEA:"SEA", TOR:"TOR", WAS:"WSH"
+};
+const MONTH_NUM = { Jan:"01", Feb:"02", Mar:"03", Apr:"04", May:"05", Jun:"06", Jul:"07", Aug:"08", Sep:"09", Oct:"10", Nov:"11", Dec:"12" };
+function scheduleDateToYMD(dateStr) {
+  // "Monday, Aug 17" -> "20260817" (assumes the current year; schedule data is always near-term)
+  const m = dateStr.match(/([A-Za-z]{3}) (\d{1,2})/);
+  if (!m) return null;
+  const year = new Date().getFullYear();
+  const month = MONTH_NUM[m[1]];
+  const day = m[2].padStart(2, "0");
+  if (!month) return null;
+  return `${year}${month}${day}`;
+}
+
+const cardsByKey = {}; // "YMD|AWAYESPN|HOMEESPN" -> { card, g }
+
 const scheduleBody = document.getElementById("schedule-body");
 schedule.forEach(day => {
   const section = document.createElement("div");
@@ -767,6 +815,11 @@ schedule.forEach(day => {
     card.addEventListener("click", () => {
       card.classList.toggle("expanded");
     });
+    const ymd = scheduleDateToYMD(day.date);
+    const awayE = ESPN_ABBR[g.away], homeE = ESPN_ABBR[g.home];
+    if (ymd && awayE && homeE) {
+      cardsByKey[`${ymd}|${awayE}|${homeE}`] = { card, g };
+    }
     section.appendChild(card);
   });
   scheduleBody.appendChild(section);
@@ -1385,7 +1438,7 @@ selectB.addEventListener("change", renderCompare);
 renderCompare();
 
 // ---- Jump Balls ----
-const jumpBallsRaw = `jonquel-jones|Jonquel Jones|NYL|0.9|67.4%
+const jumpBallsRaw = (window.LIVE_DATA && window.LIVE_DATA.jumpBallsRaw) || `jonquel-jones|Jonquel Jones|NYL|0.9|67.4%
 shakira-austin|Shakira Austin|WAS|0.9|63.8%
 aliyah-boston|Aliyah Boston|IND|0.9|65.1%
 kamilla-cardoso|Kamilla Cardoso|CHI|0.9|66.0%
@@ -1519,7 +1572,7 @@ isabelle-harrison|Isabelle Harrison|TOR|-|57.9%`;
 // Early offense frequency: share of a player's possessions that come in the first 8 seconds
 // of a dead-ball restart (inbound after made basket/FT/whistle) — the closest published proxy
 // for "gets an early shot," since no site tracks shots specifically off the opening jump ball.
-const earlyOffenseFreqRaw = `jordin-canada|9.7%
+const earlyOffenseFreqRaw = (window.LIVE_DATA && window.LIVE_DATA.earlyOffenseFreqRaw) || `jordin-canada|9.7%
 tyasha-harris|9.2%
 erica-wheeler|8.0%
 caitlin-clark|8.0%
@@ -1729,6 +1782,105 @@ document.querySelectorAll(".tab-btn").forEach(btn => {
     updateBtn(next);
   });
 })();
+
+// ---- Live / box score fetching ----
+function updateGameScore(entry, ev) {
+  const { card } = entry;
+  const comp = (ev.competitions && ev.competitions[0]) || {};
+  const status = comp.status || ev.status;
+  if (!status) return;
+  const state = status.type && status.type.state;
+  if (state === "pre") return; // leave the pregame tip-time/odds markup as-is
+  const awayComp = (comp.competitors || []).find(c => c.homeAway === "away");
+  const homeComp = (comp.competitors || []).find(c => c.homeAway === "home");
+  const centerInfo = card.querySelector(".center-info");
+  if (!centerInfo || !awayComp || !homeComp) return;
+  const awayScore = awayComp.score, homeScore = homeComp.score;
+  if (state === "in") {
+    const period = status.period;
+    const periodLabel = !period ? "" : period <= 4 ? `Q${period}` : (period === 5 ? "OT" : `OT${period - 4}`);
+    centerInfo.innerHTML = `
+      <div class="live-badge">LIVE</div>
+      <div class="score-line">${awayScore} - ${homeScore}</div>
+      <div class="game-status">${periodLabel}${status.displayClock ? " " + status.displayClock : ""}</div>
+    `;
+  } else if (state === "post") {
+    centerInfo.innerHTML = `
+      <div class="score-line final">${awayScore} - ${homeScore}</div>
+      <div class="game-status">FINAL</div>
+    `;
+    const awayInfo = card.querySelector(".team-info.away");
+    const homeInfo = card.querySelector(".team-info.home");
+    const a = parseFloat(awayScore), h = parseFloat(homeScore);
+    if (!isNaN(a) && !isNaN(h) && awayInfo && homeInfo) {
+      if (a > h) awayInfo.classList.add("winner");
+      else if (h > a) homeInfo.classList.add("winner");
+    }
+  }
+}
+
+async function fetchScoreboard(ymd) {
+  try {
+    const res = await fetch(`https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/scoreboard?dates=${ymd}`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.events || [];
+  } catch (e) {
+    return null;
+  }
+}
+
+let scoresPollTimer = null;
+async function refreshScores() {
+  const btn = document.getElementById("scores-refresh-btn");
+  const note = document.getElementById("scores-updated-note");
+  if (btn) btn.disabled = true;
+  const ymds = [...new Set(Object.keys(cardsByKey).map(k => k.split("|")[0]))];
+  let anyLive = false;
+  let anyFailure = false;
+  await Promise.all(ymds.map(async ymd => {
+    const events = await fetchScoreboard(ymd);
+    if (events === null) { anyFailure = true; return; }
+    events.forEach(ev => {
+      const comp = ev.competitions && ev.competitions[0];
+      if (!comp) return;
+      const awayComp = (comp.competitors || []).find(c => c.homeAway === "away");
+      const homeComp = (comp.competitors || []).find(c => c.homeAway === "home");
+      if (!awayComp || !homeComp) return;
+      const key = `${ymd}|${awayComp.team.abbreviation}|${homeComp.team.abbreviation}`;
+      const entry = cardsByKey[key];
+      if (!entry) return;
+      updateGameScore(entry, ev);
+      const state = (comp.status || ev.status || {}).type && (comp.status || ev.status).type.state;
+      if (state === "in") anyLive = true;
+    });
+  }));
+  if (note) {
+    if (anyFailure && ymds.length) {
+      note.textContent = "Scores unavailable right now — showing scheduled times";
+    } else {
+      const now = new Date();
+      note.textContent = `Scores via ESPN · updated ${now.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`;
+    }
+  }
+  if (btn) btn.disabled = false;
+  if (scoresPollTimer) { clearInterval(scoresPollTimer); scoresPollTimer = null; }
+  if (anyLive) scoresPollTimer = setInterval(refreshScores, 30000);
+}
+
+const scoresRefreshBtn = document.getElementById("scores-refresh-btn");
+if (scoresRefreshBtn) scoresRefreshBtn.addEventListener("click", refreshScores);
+refreshScores();
+
+// Standings / jump balls / early offense freq refresh daily via GitHub Actions (data.js).
+// Advanced Stats and Team Advanced Stats are still the embedded manual-refresh snapshot.
+if (window.LIVE_DATA && window.LIVE_DATA._updatedAt) {
+  const note = document.getElementById("source-note");
+  if (note) {
+    const d = new Date(window.LIVE_DATA._updatedAt);
+    note.textContent = `Source: hoopsjunkie.io · standings & jump balls updated ${d.toLocaleDateString([], { month: "short", day: "numeric" })}`;
+  }
+}
 </script>
 </body>
 </html>

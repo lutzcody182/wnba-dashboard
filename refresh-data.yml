@@ -1,0 +1,42 @@
+name: Refresh dashboard data
+
+on:
+  schedule:
+    # 11:00 UTC ≈ 7:00 AM ET (6:00 AM during EDT... close enough for a daily refresh)
+    - cron: "0 11 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install beautifulsoup4
+
+      - name: Run scraper
+        working-directory: scraper
+        run: python scrape.py
+
+      - name: Move data.js to repo root
+        run: mv scraper/data.js data.js
+
+      - name: Commit if changed
+        run: |
+          git config user.name "wnba-dashboard-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data.js
+          if git diff --cached --quiet; then
+            echo "No data changes."
+          else
+            git commit -m "Auto-refresh dashboard data"
+            git push
+          fi
