@@ -83,13 +83,16 @@
   .tab-panel { display: none; }
   .tab-panel.active { display: block; }
 
-  .day-section { margin-bottom: 24px; }
+  .day-section { margin-bottom: 30px; }
   .day-heading {
-    font-size: 13px;
+    font-size: 12.5px;
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: #888;
-    margin: 0 0 10px 4px;
+    letter-spacing: 0.07em;
+    color: #999;
+    margin: 0 0 12px 2px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #eee;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -106,11 +109,11 @@
 
   .game-card {
     background: #ffffff;
-    border: 1px solid #e5e5e7;
-    border-radius: 12px;
-    padding: 14px 20px;
-    margin-bottom: 10px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    border: 1px solid #ececec;
+    border-radius: 14px;
+    padding: 16px 20px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
   }
   .matchup {
     display: flex;
@@ -125,7 +128,7 @@
     width: 32px; height: 32px;
     flex-shrink: 0;
     object-fit: contain;
-    filter: drop-shadow(0 1px 1px rgba(0,0,0,0.15));
+    filter: drop-shadow(0 1px 1px rgba(0,0,0,0.08));
   }
   .team-info.away { text-align: left; }
   .team-info.home { text-align: right; }
@@ -151,16 +154,15 @@
     display: flex;
     justify-content: center;
     gap: 8px;
-    margin-top: 12px;
-    padding-top: 12px;
-    border-top: 1px solid #f0f0f0;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid #f2f2f2;
     flex-wrap: wrap;
   }
   .odds-pill {
-    background: #fafafa;
-    border: 1px solid #eee;
+    background: #f9f9fa;
     border-radius: 8px;
-    padding: 5px 10px;
+    padding: 6px 12px;
     font-size: 12px;
     color: #444;
     text-align: center;
@@ -176,25 +178,19 @@
   .odds-note { font-size: 10px; color: #ccc; text-align: center; margin-top: 6px; }
 
   .game-card { cursor: pointer; transition: box-shadow 0.15s, border-color 0.15s; }
-  .game-card:hover { box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
-  .game-card.has-injury-flag {
-    border: 2px solid #c0392b;
-    box-shadow: 0 0 0 3px rgba(192,57,43,0.08);
-  }
-  .game-card.has-injury-flag:hover { box-shadow: 0 0 0 3px rgba(192,57,43,0.08), 0 2px 10px rgba(0,0,0,0.06); }
+  .game-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-color: #e2e2e2; }
   .detail-hint {
     text-align: center;
     font-size: 11px;
     color: #bbb;
-    margin-top: 10px;
-    padding-top: 10px;
+    margin-top: 12px;
+    padding-top: 12px;
     border-top: 1px solid #f5f5f5;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 5px;
   }
-  .detail-hint.flagged { color: #c0392b; font-weight: 600; }
   .detail-hint .chevron { display: inline-block; transition: transform 0.15s; font-size: 9px; }
   .game-card.expanded .detail-hint .chevron { transform: rotate(180deg); }
   .game-detail { display: none; margin-top: 14px; padding-top: 14px; border-top: 1px solid #f0f0f0; }
@@ -375,10 +371,8 @@
   :root[data-theme="dark"] .theme-toggle { background: #1a1c22; border-color: #2a2d35; color: #e8e8ea; }
   :root[data-theme="dark"] .tabs { border-bottom-color: #2a2d35; }
   :root[data-theme="dark"] .tab-btn { color: #8b8e96; }
-  :root[data-theme="dark"] .day-heading { color: #8b8e96; }
+  :root[data-theme="dark"] .day-heading { color: #8b8e96; border-bottom-color: #23252b; }
   :root[data-theme="dark"] .game-card { background: #1a1c22; border-color: #2a2d35; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
-  :root[data-theme="dark"] .game-card.has-injury-flag { border-color: #e05c4d; box-shadow: 0 0 0 3px rgba(224,92,77,0.15); }
-  :root[data-theme="dark"] .game-card.has-injury-flag:hover { box-shadow: 0 0 0 3px rgba(224,92,77,0.15), 0 2px 10px rgba(0,0,0,0.3); }
   :root[data-theme="dark"] .team-record { color: #9a9da5; }
   :root[data-theme="dark"] .broadcast { color: #8b8e96; }
   :root[data-theme="dark"] .at { color: #6f727a; }
@@ -390,11 +384,10 @@
   :root[data-theme="dark"] .scores-refresh-row { color: #8b8e96; }
   :root[data-theme="dark"] .scores-refresh-btn { background: #1a1c22; border-color: #2a2d35; color: #c7c9cf; }
   :root[data-theme="dark"] .odds-row { border-top-color: #23252b; }
-  :root[data-theme="dark"] .odds-pill { background: #1f2128; border-color: #2a2d35; color: #c7c9cf; }
+  :root[data-theme="dark"] .odds-pill { background: #1f2128; color: #c7c9cf; }
   :root[data-theme="dark"] .odds-pill .odds-label { color: #7d8088; }
   :root[data-theme="dark"] .odds-note { color: #5c5f66; }
   :root[data-theme="dark"] .detail-hint { color: #6f727a; border-top-color: #23252b; }
-  :root[data-theme="dark"] .detail-hint.flagged { color: #f2897a; }
   :root[data-theme="dark"] .game-detail { border-top-color: #23252b; }
   :root[data-theme="dark"] .detail-section-title { color: #8b8e96; }
   :root[data-theme="dark"] .injury-item { color: #c7c9cf; }
@@ -766,9 +759,8 @@ schedule.forEach(day => {
   day.games.forEach(g => {
     const awayInjuryText = getInjuryText(g.awayName, g.injury && g.injury.away);
     const homeInjuryText = getInjuryText(g.homeName, g.injury && g.injury.home);
-    const injuryFlagged = hasInjuryReport(awayInjuryText) || hasInjuryReport(homeInjuryText);
     const card = document.createElement("div");
-    card.className = "game-card" + (injuryFlagged ? " has-injury-flag" : "");
+    card.className = "game-card";
     card.innerHTML = `
       <div class="matchup">
         <div class="team away">
@@ -799,7 +791,7 @@ schedule.forEach(day => {
       </div>
       <div class="odds-note">Odds via ESPN &middot; subject to change</div>
       ` : ""}
-      <div class="detail-hint${injuryFlagged ? " flagged" : ""}">${injuryFlagged ? "&#9873; Injury report filed &mdash; tap for details" : "Injury report &amp; season series"} <span class="chevron">&#9660;</span></div>
+      <div class="detail-hint">Injury report &amp; season series <span class="chevron">&#9660;</span></div>
       <div class="game-detail">
         <div class="detail-section">
           <div class="detail-section-title">Injury Report</div>
@@ -1932,13 +1924,6 @@ async function refreshInjuries() {
     const teams = card.querySelectorAll(".injury-team");
     patchInjuryTeam(teams[0], awayText);
     patchInjuryTeam(teams[1], homeText);
-    const flagged = hasInjuryReport(awayText) || hasInjuryReport(homeText);
-    card.classList.toggle("has-injury-flag", flagged);
-    const hint = card.querySelector(".detail-hint");
-    if (hint) {
-      hint.classList.toggle("flagged", flagged);
-      hint.innerHTML = (flagged ? "&#9873; Injury report filed &mdash; tap for details" : "Injury report &amp; season series") + ' <span class="chevron">&#9660;</span>';
-    }
   });
 }
 
