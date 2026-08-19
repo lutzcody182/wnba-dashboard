@@ -747,15 +747,11 @@ function scheduleDateToYMD(dateStr) {
 
 const cardsByKey = {}; // "YMD|AWAYESPN|HOMEESPN" -> { card, g }
 
-// Injuries auto-refresh daily via data.js (ESPN's injuries API, matched by team name).
-// Falls back to the embedded per-game snapshot ("Not yet submitted" / static text) when
-// data.js hasn't loaded or that team currently has no listed injuries.
+// Initial synchronous render uses the embedded per-game snapshot. Injuries are then
+// overwritten live, straight from ESPN's public injuries API, by refreshInjuries()
+// below (called on load, same as scores/odds) — no GitHub Action or data file needed.
 function getInjuryText(teamFullName, fallback) {
-  const live = window.LIVE_DATA && window.LIVE_DATA.injuriesByTeam;
-  if (live && Object.prototype.hasOwnProperty.call(live, teamFullName)) {
-    return live[teamFullName];
-  }
-  return live ? "No injury report available" : fallback;
+  return fallback;
 }
 
 const scheduleBody = document.getElementById("schedule-body");
@@ -1880,6 +1876,72 @@ async function fetchScoreboard(ymd) {
   }
 }
 
+// Injuries, live and direct from ESPN's public injuries API — no scraper, no GitHub
+// Action, no data file. Fetched fresh every time refreshScores() runs (page load, the
+// Refresh button, and every 30s poll during a live game).
+function normalizeInjuryStatus(raw) {
+  const s = (raw || "").trim().toLowerCase();
+  if (s.includes("day-to-day") || s.includes("day to day")) return "Questionable";
+  if (s.includes("doubtful")) return "Doubtful";
+  if (s.includes("questionable")) return "Questionable";
+  if (s.includes("probable")) return "Probable";
+  if (s.includes("available") || s.includes("active")) return "Available";
+  if (s.includes("out")) return "Out";
+  const cleaned = (raw || "").replace(/[^A-Za-z]/g, "");
+  return cleaned || "Out";
+}
+
+async function fetchInjuriesByTeam() {
+  try {
+    const res = await fetch("https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/injuries");
+    if (!res.ok) return null;
+    const data = await res.json();
+    const byTeam = {};
+    (data.injuries || []).forEach(teamEntry => {
+      const teamName = teamEntry.displayName;
+      if (!teamName) return;
+      const entries = (teamEntry.injuries || []).map(inj => {
+        const name = inj.athlete && inj.athlete.displayName;
+        if (!name) return null;
+        const status = normalizeInjuryStatus(inj.status);
+        const reason = (inj.details && inj.details.type) || "";
+        return `${name} - ${status}` + (reason ? ` (${reason})` : "");
+      }).filter(Boolean);
+      if (entries.length) byTeam[teamName] = entries.join("; ");
+    });
+    return byTeam;
+  } catch (e) {
+    return null;
+  }
+}
+
+function patchInjuryTeam(el, text) {
+  if (!el) return;
+  const head = el.querySelector(".injury-team-head");
+  el.innerHTML = "";
+  if (head) el.appendChild(head);
+  el.insertAdjacentHTML("beforeend", renderInjuryList(text));
+}
+
+async function refreshInjuries() {
+  const byTeam = await fetchInjuriesByTeam();
+  if (!byTeam) return; // leave whatever's already showing (the embedded snapshot) as-is
+  Object.values(cardsByKey).forEach(({ card, g }) => {
+    const awayText = byTeam[g.awayName] || "No injury report available";
+    const homeText = byTeam[g.homeName] || "No injury report available";
+    const teams = card.querySelectorAll(".injury-team");
+    patchInjuryTeam(teams[0], awayText);
+    patchInjuryTeam(teams[1], homeText);
+    const flagged = hasInjuryReport(awayText) || hasInjuryReport(homeText);
+    card.classList.toggle("has-injury-flag", flagged);
+    const hint = card.querySelector(".detail-hint");
+    if (hint) {
+      hint.classList.toggle("flagged", flagged);
+      hint.innerHTML = (flagged ? "&#9873; Injury report filed &mdash; tap for details" : "Injury report &amp; season series") + ' <span class="chevron">&#9660;</span>';
+    }
+  });
+}
+
 let scoresPollTimer = null;
 async function refreshScores() {
   const btn = document.getElementById("scores-refresh-btn");
@@ -1888,24 +1950,27 @@ async function refreshScores() {
   const ymds = [...new Set(Object.keys(cardsByKey).map(k => k.split("|")[0]))];
   let anyLive = false;
   let anyFailure = false;
-  await Promise.all(ymds.map(async ymd => {
-    const events = await fetchScoreboard(ymd);
-    if (events === null) { anyFailure = true; return; }
-    events.forEach(ev => {
-      const comp = ev.competitions && ev.competitions[0];
-      if (!comp) return;
-      const awayComp = (comp.competitors || []).find(c => c.homeAway === "away");
-      const homeComp = (comp.competitors || []).find(c => c.homeAway === "home");
-      if (!awayComp || !homeComp) return;
-      const key = `${ymd}|${awayComp.team.abbreviation}|${homeComp.team.abbreviation}`;
-      const entry = cardsByKey[key];
-      if (!entry) return;
-      updateGameScore(entry, ev);
-      renderOdds(entry, ev);
-      const state = (comp.status || ev.status || {}).type && (comp.status || ev.status).type.state;
-      if (state === "in") anyLive = true;
-    });
-  }));
+  await Promise.all([
+    ...ymds.map(async ymd => {
+      const events = await fetchScoreboard(ymd);
+      if (events === null) { anyFailure = true; return; }
+      events.forEach(ev => {
+        const comp = ev.competitions && ev.competitions[0];
+        if (!comp) return;
+        const awayComp = (comp.competitors || []).find(c => c.homeAway === "away");
+        const homeComp = (comp.competitors || []).find(c => c.homeAway === "home");
+        if (!awayComp || !homeComp) return;
+        const key = `${ymd}|${awayComp.team.abbreviation}|${homeComp.team.abbreviation}`;
+        const entry = cardsByKey[key];
+        if (!entry) return;
+        updateGameScore(entry, ev);
+        renderOdds(entry, ev);
+        const state = (comp.status || ev.status || {}).type && (comp.status || ev.status).type.state;
+        if (state === "in") anyLive = true;
+      });
+    }),
+    refreshInjuries(),
+  ]);
   if (note) {
     if (anyFailure && ymds.length) {
       note.textContent = "Scores unavailable right now — showing scheduled times";
@@ -1923,9 +1988,10 @@ const scoresRefreshBtn = document.getElementById("scores-refresh-btn");
 if (scoresRefreshBtn) scoresRefreshBtn.addEventListener("click", refreshScores);
 refreshScores();
 
-// Standings / jump balls / early offense freq / injuries refresh daily via GitHub Actions
-// (data.js). Advanced Stats and Team Advanced Stats are still the embedded manual-refresh
-// snapshot.
+// Standings / jump balls / early offense freq refresh daily via GitHub Actions (data.js),
+// if that's set up in the repo — see scraper/README. Injuries, scores, and odds no longer
+// need it; they're fetched live from ESPN on every page load. Advanced Stats and Team
+// Advanced Stats are still the embedded manual-refresh snapshot.
 if (window.LIVE_DATA && window.LIVE_DATA._updatedAt) {
   const note = document.getElementById("source-note");
   if (note) {
