@@ -857,23 +857,31 @@ schedule.forEach(day => {
   scheduleBody.appendChild(section);
 });
 
-// ---- Live game status + "today first, completed last" reordering ----
-// Runs as a post-process over the day-sections rendered above, so a completed
-// day's games get moved out of the way and today's games surface at the top.
-(function reorderScheduleSections() {
+// ---- "Today first, completed last" schedule ordering ----
+// Runs as a post-process over the day-sections rendered above, and re-applies
+// itself periodically so it stays correct even after the existing live score /
+// odds / standings refresh cycle updates the page.
+function applyTodayFirstOrdering() {
   const todayYMD = (() => {
     const d = new Date();
     return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`;
   })();
 
-  const sections = Array.from(scheduleBody.querySelectorAll(".day-section"));
-  const meta = sections.map((section, i) => {
-    const ymd = scheduleDateToYMD(schedule[i].date);
-    return { section, ymd, isPast: !!ymd && ymd < todayYMD, isToday: !!ymd && ymd === todayYMD };
+  const container = document.getElementById("schedule-body");
+  if (!container) return;
+  let wrap = container.querySelector(".past-games-section");
+  const sections = Array.from(container.querySelectorAll(".day-section"));
+  if (wrap) sections.push(...Array.from(wrap.querySelectorAll(".day-section")));
+  if (!sections.length) return;
+
+  const meta = sections.map(section => {
+    const heading = section.querySelector(".day-heading");
+    const dateText = heading && heading.childNodes[0] ? heading.childNodes[0].textContent.trim() : "";
+    const ymd = scheduleDateToYMD(dateText);
+    return { section, heading, ymd, isPast: !!ymd && ymd < todayYMD, isToday: !!ymd && ymd === todayYMD };
   });
 
-  meta.forEach(({ section, isToday, isPast }) => {
-    const heading = section.querySelector(".day-heading");
+  meta.forEach(({ section, heading, isToday, isPast }) => {
     if (!heading) return;
     const existingTag = heading.querySelector(".today-tag");
     if (existingTag) existingTag.remove();
@@ -881,110 +889,51 @@ schedule.forEach(day => {
     if (existingCompletedTag) existingCompletedTag.remove();
     if (isToday) {
       heading.insertAdjacentHTML("beforeend", ' <span class="today-tag">TODAY</span>');
+      section.classList.remove("past-day");
     } else if (isPast) {
       heading.insertAdjacentHTML("beforeend", ' <span class="completed-tag">COMPLETED</span>');
       section.classList.add("past-day");
       section.querySelectorAll(".game-card").forEach(card => card.classList.add("completed-card"));
+    } else {
+      section.classList.remove("past-day");
     }
   });
 
   const upcoming = meta.filter(m => !m.isPast);
   const past = meta.filter(m => m.isPast);
 
-  upcoming.forEach(m => scheduleBody.appendChild(m.section));
+  upcoming.forEach(m => container.appendChild(m.section));
 
   if (past.length) {
-    const gameCount = past.reduce((n, m) => n + m.section.querySelectorAll(".game-card").length, 0);
-    const toggle = document.createElement("div");
-    toggle.className = "past-games-toggle";
-    toggle.innerHTML = `<span>Completed Games (${gameCount})</span><span class="chevron">&#9660;</span>`;
-    const wrap = document.createElement("div");
-    wrap.className = "past-games-section";
-    past.forEach(m => wrap.appendChild(m.section));
-    toggle.addEventListener("click", () => {
-      const open = wrap.classList.toggle("open");
-      toggle.classList.toggle("open", open);
-    });
-    scheduleBody.appendChild(toggle);
-    scheduleBody.appendChild(wrap);
-  }
-})();
-
-// ---- Live scores (ESPN scoreboard API), applied on top of the reordered cards ----
-async function fetchScoreboardForDate(ymd) {
-  try {
-    const res = await fetch(`https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/scoreboard?dates=${ymd}`);
-    if (!res.ok) return [];
-    const data = await res.json();
-    return data.events || [];
-  } catch (e) {
-    console.warn("Live scores unavailable for", ymd, e);
-    return [];
-  }
-}
-
-function applyLiveEvent(event) {
-  const comp = event.competitions && event.competitions[0];
-  if (!comp || !comp.status) return;
-  const state = comp.status.type.state; // "pre" | "in" | "post"
-  const detail = comp.status.type.shortDetail || comp.status.type.detail || "";
-  const competitors = comp.competitors || [];
-  const away = competitors.find(c => c.homeAway === "away");
-  const home = competitors.find(c => c.homeAway === "home");
-  if (!away || !home || !away.team || !home.team) return;
-  const ymd = (event.date || "").slice(0, 10).replace(/-/g, "");
-  const key = `${ymd}|${away.team.abbreviation}|${home.team.abbreviation}`;
-  const entry = cardsByKey[key];
-  if (!entry) return;
-  const { card } = entry;
-  const centerInfo = card.querySelector(".center-info");
-  if (!centerInfo || state === "pre") return;
-
-  const awayScore = away.score, homeScore = home.score;
-  const awayWon = state === "post" && Number(awayScore) > Number(homeScore);
-  const homeWon = state === "post" && Number(homeScore) > Number(awayScore);
-  const awayInfo = card.querySelector(".team-info.away");
-  const homeInfo = card.querySelector(".team-info.home");
-  if (awayInfo) awayInfo.classList.toggle("winner", awayWon);
-  if (homeInfo) homeInfo.classList.toggle("winner", homeWon);
-
-  centerInfo.innerHTML = `
-    ${state === "in" ? '<div class="live-badge">LIVE</div>' : ""}
-    <div class="score-line${state === "post" ? " final" : ""}">${awayScore}&ndash;${homeScore}</div>
-    <div class="game-status">${detail}</div>
-  `;
-
-  if (state === "post") {
-    card.classList.add("final-card", "completed-card");
-    const section = card.closest(".day-section");
-    if (section) section.appendChild(card);
-  } else if (state === "in") {
-    card.classList.add("live-card");
-  }
-}
-
-let scoresRefreshing = false;
-async function refreshLiveScores() {
-  if (scoresRefreshing) return;
-  scoresRefreshing = true;
-  const btn = document.getElementById("scores-refresh-btn");
-  const originalLabel = btn ? btn.textContent : "";
-  if (btn) { btn.disabled = true; btn.textContent = "Refreshing…"; }
-  try {
-    const ymds = Array.from(new Set(Object.keys(cardsByKey).map(k => k.split("|")[0])));
-    for (const ymd of ymds) {
-      const events = await fetchScoreboardForDate(ymd);
-      events.forEach(applyLiveEvent);
+    let toggle = document.getElementById("past-games-toggle");
+    if (!wrap) {
+      wrap = document.createElement("div");
+      wrap.className = "past-games-section";
+      wrap.id = "past-games-section";
     }
-  } finally {
-    if (btn) { btn.disabled = false; btn.textContent = originalLabel || "Refresh scores"; }
-    scoresRefreshing = false;
+    if (!toggle) {
+      toggle = document.createElement("div");
+      toggle.id = "past-games-toggle";
+      toggle.className = "past-games-toggle";
+      toggle.addEventListener("click", () => {
+        const open = wrap.classList.toggle("open");
+        toggle.classList.toggle("open", open);
+      });
+    }
+    const gameCount = past.reduce((n, m) => n + m.section.querySelectorAll(".game-card").length, 0);
+    toggle.innerHTML = `<span>Completed Games (${gameCount})</span><span class="chevron">&#9660;</span>`;
+    past.forEach(m => wrap.appendChild(m.section));
+    container.appendChild(toggle);
+    container.appendChild(wrap);
+  } else if (wrap) {
+    wrap.remove();
+    const toggle = document.getElementById("past-games-toggle");
+    if (toggle) toggle.remove();
   }
 }
-const scoresRefreshBtn = document.getElementById("scores-refresh-btn");
-if (scoresRefreshBtn) scoresRefreshBtn.addEventListener("click", refreshLiveScores);
-refreshLiveScores();
-setInterval(refreshLiveScores, 120000);
+
+applyTodayFirstOrdering();
+setInterval(applyTodayFirstOrdering, 5000);
 
 const standingsBody = document.getElementById("standings-body");
 function renderStandings(rows) {
