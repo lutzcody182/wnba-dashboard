@@ -1832,6 +1832,43 @@ function updateGameScore(entry, ev) {
   }
 }
 
+// Betting odds live inside the same ESPN scoreboard payload as the scores, so they refresh
+// on every page load / manual refresh — no separate scrape needed. ESPN usually only posts
+// lines within ~5-7 days of tipoff, so this quietly does nothing until a book has a line up.
+function renderOdds(entry, ev) {
+  const { card, g } = entry;
+  const comp = (ev.competitions && ev.competitions[0]) || {};
+  const o = comp.odds && comp.odds[0];
+  if (!o) return;
+  const spreadHome = o.pointSpread && o.pointSpread.home && o.pointSpread.home.close && o.pointSpread.home.close.line;
+  const spreadAway = o.pointSpread && o.pointSpread.away && o.pointSpread.away.close && o.pointSpread.away.close.line;
+  const mlHome = o.moneyline && o.moneyline.home && o.moneyline.home.close && o.moneyline.home.close.odds;
+  const mlAway = o.moneyline && o.moneyline.away && o.moneyline.away.close && o.moneyline.away.close.odds;
+  const total = o.overUnder;
+  if (spreadHome == null || spreadAway == null || total == null) return;
+  const rowHtml = `
+    <div class="odds-pill"><span class="odds-label">Spread</span>${g.away} ${spreadAway} &middot; ${g.home} ${spreadHome}</div>
+    <div class="odds-pill"><span class="odds-label">Total</span>O/U ${total}</div>
+    <div class="odds-pill"><span class="odds-label">Moneyline</span>${g.away} ${mlAway || "-"} &middot; ${g.home} ${mlHome || "-"}</div>
+  `;
+  const hint = card.querySelector(".detail-hint");
+  let row = card.querySelector(".odds-row");
+  if (row) {
+    row.innerHTML = rowHtml;
+  } else if (hint) {
+    row = document.createElement("div");
+    row.className = "odds-row";
+    row.innerHTML = rowHtml;
+    card.insertBefore(row, hint);
+  }
+  if (!card.querySelector(".odds-note") && hint) {
+    const note = document.createElement("div");
+    note.className = "odds-note";
+    note.textContent = `Odds via ${(o.provider && o.provider.name) || "ESPN"} · subject to change`;
+    card.insertBefore(note, hint);
+  }
+}
+
 async function fetchScoreboard(ymd) {
   try {
     const res = await fetch(`https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/scoreboard?dates=${ymd}`);
@@ -1864,6 +1901,7 @@ async function refreshScores() {
       const entry = cardsByKey[key];
       if (!entry) return;
       updateGameScore(entry, ev);
+      renderOdds(entry, ev);
       const state = (comp.status || ev.status || {}).type && (comp.status || ev.status).type.state;
       if (state === "in") anyLive = true;
     });
