@@ -827,20 +827,24 @@ schedule.forEach(day => {
 });
 
 const standingsBody = document.getElementById("standings-body");
-standings.forEach(t => {
-  const tr = document.createElement("tr");
-  let badge = "";
-  if (t.flag === "x") badge = '<span class="badge clinch">CLINCHED</span>';
-  if (t.flag === "o") badge = '<span class="badge elim">ELIM</span>';
-  tr.innerHTML = `
-    <td class="rank">${t.rank}</td>
-    <td><div class="team-cell">${logo(t.code, "sm")}${t.code} &middot; ${t.name}${badge}</div></td>
-    <td class="num">${t.w}</td>
-    <td class="num">${t.l}</td>
-    <td class="num">${t.pct}</td>
-  `;
-  standingsBody.appendChild(tr);
-});
+function renderStandings(rows) {
+  standingsBody.innerHTML = "";
+  rows.forEach(t => {
+    const tr = document.createElement("tr");
+    let badge = "";
+    if (t.flag === "x") badge = '<span class="badge clinch">CLINCHED</span>';
+    if (t.flag === "o") badge = '<span class="badge elim">ELIM</span>';
+    tr.innerHTML = `
+      <td class="rank">${t.rank}</td>
+      <td><div class="team-cell">${logo(t.code, "sm")}${t.code} &middot; ${t.name}${badge}</div></td>
+      <td class="num">${t.w}</td>
+      <td class="num">${t.l}</td>
+      <td class="num">${t.pct}</td>
+    `;
+    standingsBody.appendChild(tr);
+  });
+}
+renderStandings(standings);
 
 // ---- Advanced Stats ----
 const advNamesRaw = `makayla-timpson=Makayla Timpson
@@ -1927,6 +1931,64 @@ async function refreshInjuries() {
   });
 }
 
+// Standings, live and direct from ESPN's public standings API — no scraper, no GitHub
+// Action, no data file. Same pattern as injuries above.
+const STANDINGS_NAME_TO_CODE = {
+  "Atlanta Dream": "ATL", "Chicago Sky": "CHI", "Connecticut Sun": "CON", "Dallas Wings": "DAL",
+  "Golden State Valkyries": "GSV", "Indiana Fever": "IND", "Las Vegas Aces": "LVA", "Los Angeles Sparks": "LAS",
+  "Minnesota Lynx": "MIN", "New York Liberty": "NYL", "Phoenix Mercury": "PHX", "Portland Fire": "PDX",
+  "Seattle Storm": "SEA", "Toronto Tempo": "TOR", "Washington Mystics": "WAS",
+};
+
+function standingsFlagFromNote(note) {
+  const text = typeof note === "string" ? note : ((note && note.description) || "");
+  const s = text.toLowerCase();
+  if (s.includes("clinch")) return "x";
+  if (s.includes("eliminat")) return "o";
+  return "";
+}
+
+async function fetchLiveStandings() {
+  try {
+    const res = await fetch("https://site.api.espn.com/apis/v2/sports/basketball/wnba/standings");
+    if (!res.ok) return null;
+    const data = await res.json();
+    const rows = [];
+    (data.children || []).forEach(conf => {
+      const entries = (conf.standings && conf.standings.entries) || [];
+      entries.forEach(entry => {
+        const teamName = entry.team && entry.team.displayName;
+        const code = STANDINGS_NAME_TO_CODE[teamName];
+        if (!code) return;
+        const statByName = {};
+        (entry.stats || []).forEach(s => { statByName[s.name] = s; });
+        const winsStat = statByName.wins, lossesStat = statByName.losses, pctStat = statByName.winPercent;
+        if (!winsStat || !lossesStat || !pctStat) return;
+        rows.push({
+          code, name: teamName,
+          w: parseInt(winsStat.displayValue, 10),
+          l: parseInt(lossesStat.displayValue, 10),
+          pct: pctStat.displayValue,
+          pctNum: pctStat.value,
+          flag: standingsFlagFromNote(entry.note),
+        });
+      });
+    });
+    if (rows.length !== 15) return null; // sanity check — expect the full league
+    rows.sort((a, b) => b.pctNum - a.pctNum);
+    rows.forEach((r, i) => { r.rank = i + 1; delete r.pctNum; });
+    return rows;
+  } catch (e) {
+    return null;
+  }
+}
+
+async function refreshStandings() {
+  const rows = await fetchLiveStandings();
+  if (!rows) return; // leave the embedded snapshot showing as-is
+  renderStandings(rows);
+}
+
 let scoresPollTimer = null;
 async function refreshScores() {
   const btn = document.getElementById("scores-refresh-btn");
@@ -1955,6 +2017,7 @@ async function refreshScores() {
       });
     }),
     refreshInjuries(),
+    refreshStandings(),
   ]);
   if (note) {
     if (anyFailure && ymds.length) {
