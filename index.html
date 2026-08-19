@@ -747,6 +747,17 @@ function scheduleDateToYMD(dateStr) {
 
 const cardsByKey = {}; // "YMD|AWAYESPN|HOMEESPN" -> { card, g }
 
+// Injuries auto-refresh daily via data.js (ESPN's injuries API, matched by team name).
+// Falls back to the embedded per-game snapshot ("Not yet submitted" / static text) when
+// data.js hasn't loaded or that team currently has no listed injuries.
+function getInjuryText(teamFullName, fallback) {
+  const live = window.LIVE_DATA && window.LIVE_DATA.injuriesByTeam;
+  if (live && Object.prototype.hasOwnProperty.call(live, teamFullName)) {
+    return live[teamFullName];
+  }
+  return live ? "No injury report available" : fallback;
+}
+
 const scheduleBody = document.getElementById("schedule-body");
 schedule.forEach(day => {
   const section = document.createElement("div");
@@ -757,7 +768,9 @@ schedule.forEach(day => {
   section.appendChild(heading);
 
   day.games.forEach(g => {
-    const injuryFlagged = g.injury && (hasInjuryReport(g.injury.away) || hasInjuryReport(g.injury.home));
+    const awayInjuryText = getInjuryText(g.awayName, g.injury && g.injury.away);
+    const homeInjuryText = getInjuryText(g.homeName, g.injury && g.injury.home);
+    const injuryFlagged = hasInjuryReport(awayInjuryText) || hasInjuryReport(homeInjuryText);
     const card = document.createElement("div");
     card.className = "game-card" + (injuryFlagged ? " has-injury-flag" : "");
     card.innerHTML = `
@@ -797,11 +810,11 @@ schedule.forEach(day => {
           <div class="injury-grid">
             <div class="injury-team">
               <div class="injury-team-head">${logo(g.away, "sm")}${g.away}</div>
-              ${renderInjuryList(g.injury && g.injury.away)}
+              ${renderInjuryList(awayInjuryText)}
             </div>
             <div class="injury-team">
               <div class="injury-team-head">${logo(g.home, "sm")}${g.home}</div>
-              ${renderInjuryList(g.injury && g.injury.home)}
+              ${renderInjuryList(homeInjuryText)}
             </div>
           </div>
         </div>
@@ -1872,13 +1885,14 @@ const scoresRefreshBtn = document.getElementById("scores-refresh-btn");
 if (scoresRefreshBtn) scoresRefreshBtn.addEventListener("click", refreshScores);
 refreshScores();
 
-// Standings / jump balls / early offense freq refresh daily via GitHub Actions (data.js).
-// Advanced Stats and Team Advanced Stats are still the embedded manual-refresh snapshot.
+// Standings / jump balls / early offense freq / injuries refresh daily via GitHub Actions
+// (data.js). Advanced Stats and Team Advanced Stats are still the embedded manual-refresh
+// snapshot.
 if (window.LIVE_DATA && window.LIVE_DATA._updatedAt) {
   const note = document.getElementById("source-note");
   if (note) {
     const d = new Date(window.LIVE_DATA._updatedAt);
-    note.textContent = `Source: hoopsjunkie.io · standings & jump balls updated ${d.toLocaleDateString([], { month: "short", day: "numeric" })}`;
+    note.textContent = `Source: hoopsjunkie.io + ESPN · data auto-updated ${d.toLocaleDateString([], { month: "short", day: "numeric" })}`;
   }
 }
 </script>

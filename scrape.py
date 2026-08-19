@@ -5,11 +5,12 @@ which the dashboard loads to override its embedded snapshot data with
 fresh numbers. Run daily by .github/workflows/refresh-data.yml (and
 runnable manually from the Actions tab any time).
 
-Currently covers: standings, jump balls won, jump ball win %, and early
+Currently covers: standings, jump balls won, jump ball win %, early
 offense frequency (the datasets behind the Standings tab and the Jump
-Balls tab). Advanced Stats / Team Advanced Stats are NOT covered yet —
-those tables pull from ~60 additional paginated pages each and are left
-on manual refresh for now.
+Balls tab), and current injury reports (via ESPN's public injuries API,
+matched to schedule games by team name). Advanced Stats / Team Advanced
+Stats are NOT covered yet — those tables pull from ~60 additional
+paginated pages each and are left on manual refresh for now.
 
 This script is deliberately defensive: if a page's structure doesn't
 match what we expect (site redesign, empty response, etc.), it skips
@@ -155,6 +156,56 @@ def scrape_standings():
     return rows
 
 
+ESPN_API = "https://site.api.espn.com/apis/site/v2/sports/basketball/wnba"
+
+
+def normalize_injury_status(raw):
+    """Map ESPN's free-text status to the single-word vocabulary the dashboard styles
+    (out / doubtful / questionable / probable / available) — anything else just renders
+    unstyled rather than breaking."""
+    s = (raw or "").strip().lower()
+    if "day-to-day" in s or "day to day" in s:
+        return "Questionable"
+    if "doubtful" in s:
+        return "Doubtful"
+    if "questionable" in s:
+        return "Questionable"
+    if "probable" in s:
+        return "Probable"
+    if "available" in s or "active" in s:
+        return "Available"
+    if "out" in s:
+        return "Out"
+    cleaned = re.sub(r"[^A-Za-z]", "", raw or "")
+    return cleaned or "Out"
+
+
+def scrape_injuries():
+    """
+    Returns { "Atlanta Dream": "Jordin Canada - Out (Illness); ...", ... } for every
+    team with at least one listed injury. Teams with none are simply absent from the
+    dict — the dashboard falls back to "No injury report available" for those.
+    """
+    data = json.loads(fetch(f"{ESPN_API}/injuries"))
+    by_team = {}
+    for team_entry in data.get("injuries", []):
+        team_name = team_entry.get("displayName")
+        if not team_name:
+            continue
+        entries = []
+        for inj in team_entry.get("injuries", []):
+            athlete = inj.get("athlete") or {}
+            name = athlete.get("displayName")
+            if not name:
+                continue
+            status = normalize_injury_status(inj.get("status"))
+            reason = ((inj.get("details") or {}).get("type") or "").strip()
+            entries.append(f"{name} - {status}" + (f" ({reason})" if reason else ""))
+        if entries:
+            by_team[team_name] = "; ".join(entries)
+    return by_team
+
+
 def main():
     out = {}
 
@@ -202,6 +253,17 @@ def main():
         out["earlyOffenseFreqRaw"] = "\n".join(f"{slug}|{value}" for slug, name, team, value in eof)
     else:
         print(f"  WARNING: only parsed {len(eof)} early-offense rows — skipping update", file=sys.stderr)
+
+    print("Scraping injury reports (ESPN)...", file=sys.stderr)
+    try:
+        injuries_by_team = scrape_injuries()
+    except Exception as e:
+        print(f"  ERROR: {e}", file=sys.stderr)
+        injuries_by_team = {}
+    if injuries_by_team:
+        out["injuriesByTeam"] = injuries_by_team
+    else:
+        print("  WARNING: no injuries parsed — skipping update (could be a genuinely healthy day)", file=sys.stderr)
 
     if not out:
         print("Nothing scraped successfully — leaving existing data.js untouched.", file=sys.stderr)
