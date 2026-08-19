@@ -5,12 +5,18 @@ which the dashboard loads to override its embedded snapshot data with
 fresh numbers. Run daily by .github/workflows/refresh-data.yml (and
 runnable manually from the Actions tab any time).
 
-Currently covers: standings, jump balls won, jump ball win %, early
-offense frequency (the datasets behind the Standings tab and the Jump
-Balls tab), and current injury reports (via ESPN's public injuries API,
-matched to schedule games by team name). Advanced Stats / Team Advanced
-Stats are NOT covered yet — those tables pull from ~60 additional
-paginated pages each and are left on manual refresh for now.
+Covers: standings, jump balls won, jump ball win %, early offense
+frequency, the 19-column player Advanced Stats table, and the 44-column
+Team Advanced Stats table (17 advanced + 27 scoring categories). Each of
+those last two is assembled by fetching one hoopsjunkie.io leaderboard
+page per column (paginated for players) and merging by player slug /
+team code — the same column order as advCols / teamCols in the
+dashboard's <script>, so don't reorder one without the other.
+
+Injury reports, live scores, and betting odds are NOT scraped here — the
+dashboard fetches those directly from ESPN's public API client-side, on
+every page load, so they don't depend on this script or GitHub Actions
+running at all.
 
 This script is deliberately defensive: if a page's structure doesn't
 match what we expect (site redesign, empty response, etc.), it skips
@@ -115,6 +121,148 @@ def parse_player_leaderboard(html_pages):
     return out
 
 
+# Column order must exactly match advCols in wnba-dashboard.html's <script>.
+ADV_PLAYER_COLS = [
+    ("ORtg", "advanced/offensive-rating"),
+    ("DRtg", "advanced/defensive-rating"),
+    ("NetRtg", "advanced/net-rating"),
+    ("GmSc", "advanced/game-score"),
+    ("PER", "advanced/player-efficiency-rating"),
+    ("eFG", "advanced/effective-field-goal-percent"),
+    ("TS", "advanced/true-shooting-percent"),
+    ("FTr", "advanced/free-throw-rate"),
+    ("3PAr", "advanced/three-point-rate"),
+    ("OREB", "advanced/offensive-rebound-percent"),
+    ("DREB", "advanced/defensive-rebound-percent"),
+    ("REB", "advanced/rebound-percent"),
+    ("AST", "advanced/assist-percent"),
+    ("ASTRatio", "advanced/assist-ratio"),
+    ("ASTTOV", "advanced/assist-to-turnover-ratio"),
+    ("STL", "advanced/steal-percent"),
+    ("BLK", "advanced/block-percent"),
+    ("USG", "advanced/usage-percent"),
+    ("TOVRatio", "advanced/turnover-ratio"),
+]
+
+# Column order must exactly match teamCols in wnba-dashboard.html's <script>.
+TEAM_COLS = [
+    ("ORtg", "advanced/offensive-rating"),
+    ("DRtg", "advanced/defensive-rating"),
+    ("NetRtg", "advanced/net-rating"),
+    ("Pace", "advanced/pace"),
+    ("PossDur", "advanced/avg-possession-duration"),
+    ("eFG", "advanced/effective-field-goal-percent"),
+    ("TS", "advanced/true-shooting-percent"),
+    ("FTr", "advanced/free-throw-rate"),
+    ("3PAr", "advanced/three-point-rate"),
+    ("OREB", "advanced/offensive-rebound-percent"),
+    ("DREB", "advanced/defensive-rebound-percent"),
+    ("AST", "advanced/assist-percent"),
+    ("ASTRatio", "advanced/assist-ratio"),
+    ("ASTTOV", "advanced/assist-to-turnover-ratio"),
+    ("STL", "advanced/steal-percent"),
+    ("BLK", "advanced/block-percent"),
+    ("TOVRatio", "advanced/turnover-ratio"),
+    ("RA_FG", "scoring/restricted-area-fg-percent"),
+    ("PaintFG", "scoring/paint-non-ra-fg-percent"),
+    ("MidRangeFG", "scoring/mid-range-fg-percent"),
+    ("AB3FG", "scoring/above-break-3-fg-percent"),
+    ("LC3FG", "scoring/left-corner-3-fg-percent"),
+    ("RC3FG", "scoring/right-corner-3-fg-percent"),
+    ("FG0_4", "scoring/0-4-ft-fg-percent"),
+    ("FG5_9", "scoring/5-9-ft-fg-percent"),
+    ("FG10_14", "scoring/10-14-ft-fg-percent"),
+    ("FG15_19", "scoring/15-19-ft-fg-percent"),
+    ("FG20_24", "scoring/20-24-ft-fg-percent"),
+    ("FG25plus", "scoring/25-plus-ft-fg-percent"),
+    ("FBPts", "scoring/fast-break-points"),
+    ("FBAst", "scoring/fast-break-assists"),
+    ("FBFG", "scoring/fast-break-fg-percent"),
+    ("FB3Pts", "scoring/fast-break-3pt-points"),
+    ("FB3FG", "scoring/fast-break-3pt-percent"),
+    ("SCPts", "scoring/second-chance-points"),
+    ("SCAst", "scoring/second-chance-assists"),
+    ("SCFG", "scoring/second-chance-fg-percent"),
+    ("SC3Pts", "scoring/second-chance-3pt-points"),
+    ("SC3FG", "scoring/second-chance-3pt-percent"),
+    ("POT", "scoring/points-off-turnovers"),
+    ("OTAst", "scoring/off-turnover-assists"),
+    ("OTFG", "scoring/off-turnover-fg-percent"),
+    ("OT3Pts", "scoring/off-turnover-3pt-points"),
+    ("OT3FG", "scoring/off-turnover-3pt-percent"),
+]
+
+
+def parse_team_leaderboard(html):
+    """
+    Structural parse of a single-page team leaderboard: finds every
+    <a href="/wnba/team/{code}..."> (hoopsjunkie appends "?season=2026" to these,
+    hence the prefix match), walks up to its row, and takes the last cell that
+    looks like a number/percentage as the value. Returns {code: value}.
+    """
+    soup = BeautifulSoup(html, "html.parser")
+    out = {}
+    for row in soup.find_all("tr"):
+        team_links = row.find_all("a", href=re.compile(r"^/wnba/team/[a-z]+"))
+        if not team_links:
+            continue
+        m = re.match(r"^/wnba/team/([a-z]+)", team_links[0]["href"])
+        if not m:
+            continue
+        code = m.group(1).upper()
+        if code not in TEAM_CODES or code in out:
+            continue
+        cells = [c.get_text(" ", strip=True) for c in row.find_all(["td", "th"])]
+        cells = [c for c in cells if c]
+        if not cells:
+            continue
+        value = cells[-1]
+        if not re.match(r"^-?\+?\d", value):  # last cell should look numeric; skip if not
+            continue
+        out[code] = value
+    return out
+
+
+def scrape_player_advanced():
+    """Returns (advNamesRaw, advStatsRaw) strings in the dashboard's exact raw format,
+    or (None, None) if the merged result looks too small to trust."""
+    names, teams, stats = {}, {}, {}
+    for col_key, slug_path in ADV_PLAYER_COLS:
+        pages = fetch_all_pages(f"{BASE}/wnba/stats/2026/players/{slug_path}")
+        for slug, name, team, value in parse_player_leaderboard(pages):
+            names.setdefault(slug, name)
+            if team:
+                teams[slug] = team
+            stats.setdefault(slug, {})[col_key] = value
+        time.sleep(0.3)
+    if len(names) < 80:  # sanity floor — the real dataset has 100+ qualified players
+        return None, None
+    names_lines = [f"{slug}={names[slug]}" for slug in names]
+    stats_lines = []
+    for slug in names:
+        vals = [stats.get(slug, {}).get(col_key, "-") for col_key, _ in ADV_PLAYER_COLS]
+        stats_lines.append(f"{slug}|{teams.get(slug, '')}|{'|'.join(vals)}")
+    return "\n".join(names_lines), "\n".join(stats_lines)
+
+
+def scrape_team_advanced():
+    """Returns teamStatsRaw string in the dashboard's exact raw format, or None if
+    fewer than all 15 teams came back for enough columns to trust."""
+    stats = {}
+    for col_key, slug_path in TEAM_COLS:
+        html = fetch(f"{BASE}/wnba/stats/2026/teams/{slug_path}")
+        for code, value in parse_team_leaderboard(html).items():
+            stats.setdefault(code, {})[col_key] = value
+        time.sleep(0.3)
+    if len(stats) != 15:
+        return None
+    lines = []
+    for code in sorted(stats.keys()):
+        vals = [stats[code].get(col_key, "-") for col_key, _ in TEAM_COLS]
+        lines.append(f"{code}|{'|'.join(vals)}")
+    return "\n".join(lines)
+
+
 def scrape_standings():
     html = fetch(f"{BASE}/wnba/standings")
     soup = BeautifulSoup(html, "html.parser")
@@ -154,56 +302,6 @@ def scrape_standings():
         })
     rows.sort(key=lambda r: r["rank"])
     return rows
-
-
-ESPN_API = "https://site.api.espn.com/apis/site/v2/sports/basketball/wnba"
-
-
-def normalize_injury_status(raw):
-    """Map ESPN's free-text status to the single-word vocabulary the dashboard styles
-    (out / doubtful / questionable / probable / available) — anything else just renders
-    unstyled rather than breaking."""
-    s = (raw or "").strip().lower()
-    if "day-to-day" in s or "day to day" in s:
-        return "Questionable"
-    if "doubtful" in s:
-        return "Doubtful"
-    if "questionable" in s:
-        return "Questionable"
-    if "probable" in s:
-        return "Probable"
-    if "available" in s or "active" in s:
-        return "Available"
-    if "out" in s:
-        return "Out"
-    cleaned = re.sub(r"[^A-Za-z]", "", raw or "")
-    return cleaned or "Out"
-
-
-def scrape_injuries():
-    """
-    Returns { "Atlanta Dream": "Jordin Canada - Out (Illness); ...", ... } for every
-    team with at least one listed injury. Teams with none are simply absent from the
-    dict — the dashboard falls back to "No injury report available" for those.
-    """
-    data = json.loads(fetch(f"{ESPN_API}/injuries"))
-    by_team = {}
-    for team_entry in data.get("injuries", []):
-        team_name = team_entry.get("displayName")
-        if not team_name:
-            continue
-        entries = []
-        for inj in team_entry.get("injuries", []):
-            athlete = inj.get("athlete") or {}
-            name = athlete.get("displayName")
-            if not name:
-                continue
-            status = normalize_injury_status(inj.get("status"))
-            reason = ((inj.get("details") or {}).get("type") or "").strip()
-            entries.append(f"{name} - {status}" + (f" ({reason})" if reason else ""))
-        if entries:
-            by_team[team_name] = "; ".join(entries)
-    return by_team
 
 
 def main():
@@ -254,16 +352,28 @@ def main():
     else:
         print(f"  WARNING: only parsed {len(eof)} early-offense rows — skipping update", file=sys.stderr)
 
-    print("Scraping injury reports (ESPN)...", file=sys.stderr)
+    print("Scraping player advanced stats (19 categories, paginated)...", file=sys.stderr)
     try:
-        injuries_by_team = scrape_injuries()
+        adv_names, adv_stats = scrape_player_advanced()
     except Exception as e:
         print(f"  ERROR: {e}", file=sys.stderr)
-        injuries_by_team = {}
-    if injuries_by_team:
-        out["injuriesByTeam"] = injuries_by_team
+        adv_names, adv_stats = None, None
+    if adv_names and adv_stats:
+        out["advNamesRaw"] = adv_names
+        out["advStatsRaw"] = adv_stats
     else:
-        print("  WARNING: no injuries parsed — skipping update (could be a genuinely healthy day)", file=sys.stderr)
+        print("  WARNING: player advanced scrape looked incomplete — skipping update", file=sys.stderr)
+
+    print("Scraping team advanced + scoring stats (44 categories)...", file=sys.stderr)
+    try:
+        team_stats = scrape_team_advanced()
+    except Exception as e:
+        print(f"  ERROR: {e}", file=sys.stderr)
+        team_stats = None
+    if team_stats:
+        out["teamStatsRaw"] = team_stats
+    else:
+        print("  WARNING: team advanced scrape looked incomplete — skipping update", file=sys.stderr)
 
     if not out:
         print("Nothing scraped successfully — leaving existing data.js untouched.", file=sys.stderr)
