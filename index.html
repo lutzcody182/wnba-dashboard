@@ -779,88 +779,156 @@ function getInjuryText(teamFullName, fallback) {
 }
 
 const scheduleBody = document.getElementById("schedule-body");
-schedule.forEach(day => {
-  const section = document.createElement("div");
-  section.className = "day-section";
-  const heading = document.createElement("div");
-  heading.className = "day-heading";
-  heading.innerHTML = day.date + (day.isToday ? ' <span class="today-tag">TODAY</span>' : "");
-  section.appendChild(heading);
 
-  day.games.forEach(g => {
-    const awayInjuryText = getInjuryText(g.awayName, g.injury && g.injury.away);
-    const homeInjuryText = getInjuryText(g.homeName, g.injury && g.injury.home);
-    const card = document.createElement("div");
-    card.className = "game-card";
-    card.innerHTML = `
-      <div class="matchup">
-        <div class="team away">
-          ${logo(g.away)}
-          <div class="team-info away">
-            <div class="team-name">${g.awayName}</div>
-            <div class="team-record">${g.awayRec}</div>
+// Reverse of ESPN_ABBR: ESPN's team abbreviation -> our internal team code,
+// used to look up logos/colors for teams that come from the live API.
+const ESPN_ABBR_REV = Object.fromEntries(Object.entries(ESPN_ABBR).map(([ours, espn]) => [espn, ours]));
+
+function liveScheduleYMD(d) {
+  return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function buildGameCard(g) {
+  const card = document.createElement("div");
+  card.className = "game-card";
+  const centerHtml = g.state === "post"
+    ? `<div class="score-line final">${g.awayScore}&ndash;${g.homeScore}</div><div class="game-status">${g.statusDetail || "Final"}</div>`
+    : g.state === "in"
+    ? `<div class="live-badge">LIVE</div><div class="score-line">${g.awayScore}&ndash;${g.homeScore}</div><div class="game-status">${g.statusDetail || ""}</div>`
+    : `<div class="at">at</div><div class="tip-time">${g.time}</div>${g.broadcast ? `<div class="broadcast">${g.broadcast}</div>` : ""}`;
+  card.innerHTML = `
+    <div class="matchup">
+      <div class="team away">
+        ${logo(g.away)}
+        <div class="team-info away">
+          <div class="team-name">${g.awayName}</div>
+          <div class="team-record">${g.awayRec}</div>
+        </div>
+      </div>
+      <div class="center-info">${centerHtml}</div>
+      <div class="team home">
+        ${logo(g.home)}
+        <div class="team-info home">
+          <div class="team-name">${g.homeName}</div>
+          <div class="team-record">${g.homeRec}</div>
+        </div>
+      </div>
+    </div>
+    <div class="detail-hint">Injury report &amp; season series <span class="chevron">&#9660;</span></div>
+    <div class="game-detail">
+      <div class="detail-section">
+        <div class="detail-section-title">Injury Report</div>
+        <div class="injury-grid">
+          <div class="injury-team">
+            <div class="injury-team-head">${logo(g.away, "sm")}${g.away}</div>
+            ${renderInjuryList(g.injury.away)}
           </div>
-        </div>
-        <div class="center-info">
-          <div class="at">at</div>
-          <div class="tip-time">${g.time}</div>
-          ${g.broadcast ? `<div class="broadcast">${g.broadcast}</div>` : ""}
-        </div>
-        <div class="team home">
-          ${logo(g.home)}
-          <div class="team-info home">
-            <div class="team-name">${g.homeName}</div>
-            <div class="team-record">${g.homeRec}</div>
+          <div class="injury-team">
+            <div class="injury-team-head">${logo(g.home, "sm")}${g.home}</div>
+            ${renderInjuryList(g.injury.home)}
           </div>
         </div>
       </div>
-      ${g.odds ? `
-      <div class="odds-row">
-        <div class="odds-pill"><span class="odds-label">Spread</span>${g.away} ${g.odds.spreadAway} &middot; ${g.home} ${g.odds.spreadHome}</div>
-        <div class="odds-pill"><span class="odds-label">Total</span>O/U ${g.odds.total}</div>
-        <div class="odds-pill"><span class="odds-label">Moneyline</span>${g.away} ${g.odds.mlAway} &middot; ${g.home} ${g.odds.mlHome}</div>
+      <div class="detail-section">
+        <div class="detail-section-title">Season Series</div>
+        <div class="series-summary">Season series history isn't available for auto-loaded games</div>
       </div>
-      <div class="odds-note">Odds via ESPN &middot; subject to change</div>
-      ` : ""}
-      <div class="detail-hint">Injury report &amp; season series <span class="chevron">&#9660;</span></div>
-      <div class="game-detail">
-        <div class="detail-section">
-          <div class="detail-section-title">Injury Report</div>
-          <div class="injury-grid">
-            <div class="injury-team">
-              <div class="injury-team-head">${logo(g.away, "sm")}${g.away}</div>
-              ${renderInjuryList(awayInjuryText)}
-            </div>
-            <div class="injury-team">
-              <div class="injury-team-head">${logo(g.home, "sm")}${g.home}</div>
-              ${renderInjuryList(homeInjuryText)}
-            </div>
-          </div>
-        </div>
-        <div class="detail-section">
-          <div class="detail-section-title">Season Series</div>
-          <div class="series-summary">${(g.series && g.series.summary) || "Season series tied 0-0"}</div>
-          ${renderSeriesGames(g.series && g.series.games)}
-        </div>
-      </div>
-    `;
-    card.addEventListener("click", () => {
-      card.classList.toggle("expanded");
-    });
-    const ymd = scheduleDateToYMD(day.date);
-    const awayE = ESPN_ABBR[g.away], homeE = ESPN_ABBR[g.home];
-    if (ymd && awayE && homeE) {
-      cardsByKey[`${ymd}|${awayE}|${homeE}`] = { card, g };
+    </div>
+  `;
+  card.addEventListener("click", () => card.classList.toggle("expanded"));
+  if (g.state === "post") {
+    const awayWon = Number(g.awayScore) > Number(g.homeScore);
+    const homeWon = Number(g.homeScore) > Number(g.awayScore);
+    const awayInfo = card.querySelector(".team-info.away");
+    const homeInfo = card.querySelector(".team-info.home");
+    if (awayWon && awayInfo) awayInfo.classList.add("winner");
+    if (homeWon && homeInfo) homeInfo.classList.add("winner");
+  }
+  return card;
+}
+
+async function buildLiveSchedule() {
+  if (!scheduleBody) return;
+  const today = new Date();
+  const start = new Date(today);
+  start.setDate(start.getDate() - 2);
+  const end = new Date(today);
+  end.setDate(end.getDate() + 6);
+  let events = [];
+  try {
+    const url = "https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/scoreboard" + "?" + "dates" + "=" + liveScheduleYMD(start) + "-" + liveScheduleYMD(end);
+    const res = await fetch(url);
+    if (res.ok) {
+      const data = await res.json();
+      events = data.events || [];
     }
-    section.appendChild(card);
-  });
-  scheduleBody.appendChild(section);
-});
+  } catch (e) {
+    console.warn("Could not load live schedule", e);
+  }
 
-// ---- "Today first, completed last" schedule ordering ----
-// Runs as a post-process over the day-sections rendered above, and re-applies
-// itself periodically so it stays correct even after the existing live score /
-// odds / standings refresh cycle updates the page.
+  if (!events.length) {
+    scheduleBody.innerHTML = '<div class="day-heading">Schedule unavailable right now &mdash; try reloading the page.</div>';
+    return;
+  }
+
+  const byDate = {};
+  events.forEach(ev => {
+    const comp = ev.competitions && ev.competitions[0];
+    if (!comp || !comp.status) return;
+    const competitors = comp.competitors || [];
+    const away = competitors.find(c => c.homeAway === "away");
+    const home = competitors.find(c => c.homeAway === "home");
+    if (!away || !home || !away.team || !home.team) return;
+    const d = new Date(ev.date);
+    const ymd = liveScheduleYMD(d);
+    const awayCode = ESPN_ABBR_REV[away.team.abbreviation] || away.team.abbreviation;
+    const homeCode = ESPN_ABBR_REV[home.team.abbreviation] || home.team.abbreviation;
+    const state = comp.status.type.state;
+    const g = {
+      away: awayCode,
+      awayName: away.team.displayName,
+      awayRec: (away.records && away.records[0] && away.records[0].summary) || "",
+      home: homeCode,
+      homeName: home.team.displayName,
+      homeRec: (home.records && home.records[0] && home.records[0].summary) || "",
+      time: d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZoneName: "short" }),
+      broadcast: comp.broadcast || "",
+      state,
+      awayScore: away.score,
+      homeScore: home.score,
+      statusDetail: comp.status.type.shortDetail || comp.status.type.detail || "",
+      injury: { away: "Not yet submitted", home: "Not yet submitted" }
+    };
+    (byDate[ymd] = byDate[ymd] || []).push(g);
+  });
+
+  const dateKeys = Object.keys(byDate).sort();
+  scheduleBody.innerHTML = "";
+  dateKeys.forEach(ymd => {
+    const games = byDate[ymd];
+    const sampleDate = new Date(`${ymd.slice(0, 4)}-${ymd.slice(4, 6)}-${ymd.slice(6, 8)}T12:00:00`);
+    const dateLabel = sampleDate.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
+    const section = document.createElement("div");
+    section.className = "day-section";
+    const heading = document.createElement("div");
+    heading.className = "day-heading";
+    heading.textContent = dateLabel;
+    section.appendChild(heading);
+    games.forEach(g => {
+      const card = buildGameCard(g);
+      const awayE = ESPN_ABBR[g.away] || g.away;
+      const homeE = ESPN_ABBR[g.home] || g.home;
+      cardsByKey[`${ymd}|${awayE}|${homeE}`] = { card, g };
+      section.appendChild(card);
+    });
+    scheduleBody.appendChild(section);
+  });
+
+  if (typeof applyTodayFirstOrdering === "function") applyTodayFirstOrdering();
+}
+
+buildLiveSchedule();
+
 function applyTodayFirstOrdering() {
   const todayYMD = (() => {
     const d = new Date();
