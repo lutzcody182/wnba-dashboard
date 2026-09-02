@@ -15,5 +15,5 @@ window.LIVE_DATA = {
     "Seattle Storm": "Natisha Hiedeman - Out (Shoulder); Awa Fam - Out (Not Injury Related)",
     "Toronto Tempo": "Nyara Sabally - Out (Calf); Maria Conde - Out (Not Injury Related); Julie Allemand - Out (Head); Marina Mabrey - Out (Hip); Aneesah Morrow - Out (Knee); Brittney Sykes - Out (Foot)"
   },
-  "_updatedAt": "2026-09-01T15:24:12Z"
+  "_updatedAt": "2026-09-02T14:59:48Z"
 };
