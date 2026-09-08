@@ -5,15 +5,15 @@ window.LIVE_DATA = {
     "Chicago Sky": "Skylar Diggins - Out (Knee); DiJonai Carrington - Out (Foot); Rickea Jackson - Out (Knee)",
     "Connecticut Sun": "Rayah Marshall - Out (Coach's Decision); Olivia Nelson-Ododa - Out (Knee); Brittney Griner - Out (Knee); Kennedy Burke - Out (Not Injury Related); Leila Lacan - Out (Not Injury Related)",
     "Dallas Wings": "Azzi Fudd - Out (Knee); Costanza Verona - Out (Personal)",
-    "Golden State Valkyries": "Cecilia Zandalasini - Out (Not Injury Related); Janelle Salaun - Out (Not Injury Related); Gabby Williams - Out (Not Injury Related); Iliana Rupert - Out (Not Injury Related)",
+    "Golden State Valkyries": "Gabby Williams - Out (Not Injury Related); Cecilia Zandalasini - Out (Not Injury Related); Janelle Salaun - Out (Not Injury Related); Iliana Rupert - Out (Not Injury Related)",
     "Las Vegas Aces": "Ta'Niya Latson - Out (Coach's Decision); NaLyssa Smith - Out (Leg)",
     "Los Angeles Sparks": "Aaliyah Nye - Out (Not Injury Related)",
     "Minnesota Lynx": "Dorka Juhasz - Out (Not Injury Related); Elena Buenavida - Out (Coach's Decision); Antonia Delaere - Out (Not Injury Related)",
     "New York Liberty": "Satou Sabally - Out (Concussion)",
     "Phoenix Mercury": "Kelsey Plum - Out (Lower Leg); Kahleah Copper - Out (Ankle); Valeriane Ayayi - Out (Not Injury Related); Kyara Linskens - Out (Not Injury Related); Jovana Nogic - Out (Not Injury Related)",
-    "Portland Fire": "Carla Leite - Out (Not Injury Related); Frieda Buhner - Out (Not Injury Related); Luisa Geiselsoder - Out (Personal); Sarah Ashlee Barker - Out (Knee); Sania Feagin - Out (Knee)",
+    "Portland Fire": "Frieda Buhner - Out (Not Injury Related); Carla Leite - Out (Not Injury Related); Luisa Geiselsoder - Out (Personal); Sarah Ashlee Barker - Out (Knee); Sania Feagin - Out (Knee)",
     "Seattle Storm": "Awa Fam - Out (Not Injury Related); Natisha Hiedeman - Out (Shoulder)",
     "Toronto Tempo": "Maria Conde - Out (Not Injury Related); Julie Allemand - Out (Head); Marina Mabrey - Out (Hip); Aneesah Morrow - Out (Knee); Brittney Sykes - Out (Foot)"
   },
-  "_updatedAt": "2026-09-07T16:18:34Z"
+  "_updatedAt": "2026-09-08T14:56:51Z"
 };
