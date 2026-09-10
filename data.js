@@ -4,7 +4,7 @@ window.LIVE_DATA = {
     "Atlanta Dream": "Brionna Jones - Out (Leg)",
     "Chicago Sky": "Skylar Diggins - Out (Knee); DiJonai Carrington - Out (Foot); Rickea Jackson - Out (Knee)",
     "Connecticut Sun": "Rayah Marshall - Out (Coach's Decision); Olivia Nelson-Ododa - Out (Knee); Brittney Griner - Out (Knee); Leila Lacan - Out (Not Injury Related)",
-    "Dallas Wings": "Alanna Smith - Questionable (Leg); Azzi Fudd - Out (Knee); Costanza Verona - Out (Personal)",
+    "Dallas Wings": "Alanna Smith - Out (Leg); Azzi Fudd - Out (Knee); Costanza Verona - Out (Personal)",
     "Golden State Valkyries": "Gabby Williams - Out (Not Injury Related); Cecilia Zandalasini - Out (Not Injury Related); Janelle Salaun - Out (Not Injury Related); Iliana Rupert - Out (Not Injury Related)",
     "Las Vegas Aces": "Ta'Niya Latson - Out (Coach's Decision); NaLyssa Smith - Out (Leg)",
     "Los Angeles Sparks": "Aaliyah Nye - Out (Not Injury Related)",
@@ -12,8 +12,8 @@ window.LIVE_DATA = {
     "New York Liberty": "Satou Sabally - Out (Concussion)",
     "Phoenix Mercury": "Kelsey Plum - Out (Lower Leg); Kahleah Copper - Out (Ankle); Valeriane Ayayi - Out (Not Injury Related); Kyara Linskens - Out (Not Injury Related); Jovana Nogic - Out (Not Injury Related)",
     "Portland Fire": "Frieda Buhner - Out (Not Injury Related); Carla Leite - Out (Not Injury Related); Luisa Geiselsoder - Out (Personal); Sarah Ashlee Barker - Out (Knee); Sania Feagin - Out (Knee)",
-    "Seattle Storm": "Awa Fam - Out (Not Injury Related); Natisha Hiedeman - Out (Shoulder)",
+    "Seattle Storm": "Ezi Magbegor - Questionable (Lower Leg); Jade Melbourne - Questionable (Illness); Awa Fam - Out (Not Injury Related); Natisha Hiedeman - Out (Shoulder)",
     "Toronto Tempo": "Maria Conde - Out (Not Injury Related); Julie Allemand - Out (Head); Marina Mabrey - Out (Hip); Aneesah Morrow - Out (Knee); Brittney Sykes - Out (Foot)"
   },
-  "_updatedAt": "2026-09-09T15:01:49Z"
+  "_updatedAt": "2026-09-10T14:54:08Z"
 };
