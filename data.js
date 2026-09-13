@@ -5,7 +5,7 @@ window.LIVE_DATA = {
     "Chicago Sky": "Skylar Diggins - Out (Knee); DiJonai Carrington - Out (Foot); Rickea Jackson - Out (Knee)",
     "Connecticut Sun": "Rayah Marshall - Out (Coach's Decision); Olivia Nelson-Ododa - Out (Knee); Brittney Griner - Out (Knee); Leila Lacan - Out (Not Injury Related)",
     "Dallas Wings": "Alanna Smith - Out (Leg); Azzi Fudd - Out (Knee); Costanza Verona - Out (Personal)",
-    "Golden State Valkyries": "Gabby Williams - Out (Not Injury Related); Cecilia Zandalasini - Out (Not Injury Related); Janelle Salaun - Out (Not Injury Related); Iliana Rupert - Out (Not Injury Related)",
+    "Golden State Valkyries": "Janelle Salaun - Out (Not Injury Related); Gabby Williams - Out (Not Injury Related); Iliana Rupert - Out (Not Injury Related)",
     "Las Vegas Aces": "Ta'Niya Latson - Out (Coach's Decision); NaLyssa Smith - Out (Leg)",
     "Los Angeles Sparks": "Aaliyah Nye - Out (Not Injury Related)",
     "Minnesota Lynx": "Dorka Juhasz - Out (Not Injury Related); Elena Buenavida - Out (Coach's Decision); Antonia Delaere - Out (Not Injury Related)",
@@ -15,5 +15,5 @@ window.LIVE_DATA = {
     "Seattle Storm": "Jade Melbourne - Out (Illness); Katie Lou Samuelson - Out (Knee); Ezi Magbegor - Out (Lower Leg); Awa Fam - Out (Not Injury Related); Natisha Hiedeman - Out (Shoulder)",
     "Toronto Tempo": "Maria Conde - Out (Not Injury Related); Julie Allemand - Out (Head); Marina Mabrey - Out (Hip); Aneesah Morrow - Out (Knee); Brittney Sykes - Out (Foot)"
   },
-  "_updatedAt": "2026-09-12T13:54:32Z"
+  "_updatedAt": "2026-09-13T14:49:10Z"
 };
