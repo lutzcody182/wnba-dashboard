@@ -12,8 +12,8 @@ window.LIVE_DATA = {
     "New York Liberty": "Satou Sabally - Out (Concussion)",
     "Phoenix Mercury": "Kelsey Plum - Out (Lower Leg); Kahleah Copper - Out (Ankle); Valeriane Ayayi - Out (Not Injury Related); Kyara Linskens - Out (Not Injury Related); Jovana Nogic - Out (Not Injury Related)",
     "Portland Fire": "Frieda Buhner - Out (Not Injury Related); Carla Leite - Out (Not Injury Related); Luisa Geiselsoder - Out (Personal); Sarah Ashlee Barker - Out (Knee); Sania Feagin - Out (Knee)",
-    "Seattle Storm": "Jade Melbourne - Out (Illness); Katie Lou Samuelson - Out (Knee); Ezi Magbegor - Out (Lower Leg); Awa Fam - Out (Not Injury Related); Natisha Hiedeman - Out (Shoulder)",
+    "Seattle Storm": "Awa Fam - Out (Not Injury Related); Jade Melbourne - Out (Illness); Katie Lou Samuelson - Out (Knee); Ezi Magbegor - Out (Lower Leg); Natisha Hiedeman - Out (Shoulder)",
     "Toronto Tempo": "Maria Conde - Out (Not Injury Related); Julie Allemand - Out (Head); Marina Mabrey - Out (Hip); Aneesah Morrow - Out (Knee); Brittney Sykes - Out (Foot)"
   },
-  "_updatedAt": "2026-09-13T14:49:10Z"
+  "_updatedAt": "2026-09-14T16:48:42Z"
 };
