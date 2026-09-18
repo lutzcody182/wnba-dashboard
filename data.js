@@ -2,18 +2,19 @@
 window.LIVE_DATA = {
   "injuriesByTeam": {
     "Atlanta Dream": "Brionna Jones - Out (Leg)",
-    "Chicago Sky": "Natasha Cloud - Questionable (Knee); DiJonai Carrington - Out (Foot); Skylar Diggins - Out (Knee); Rickea Jackson - Out (Knee)",
-    "Connecticut Sun": "Diamond Miller - Questionable (Thumb); Leila Lacan - Out (Rest); Brittney Griner - Out (Knee); Kennedy Burke - Out (Shoulder)",
-    "Dallas Wings": "Alanna Smith - Out (Lower Leg); Azzi Fudd - Out (Knee); Costanza Verona - Out (Personal)",
-    "Golden State Valkyries": "Iliana Rupert - Out (Not Injury Related)",
+    "Chicago Sky": "Natasha Cloud - Out (Knee); Morgan Maly - Out (Coach's Decision); DiJonai Carrington - Out (Foot); Skylar Diggins - Out (Knee); Rickea Jackson - Out (Knee)",
+    "Connecticut Sun": "Rayah Marshall - Out (Coach's Decision); Diamond Miller - Out (Thumb); Leila Lacan - Out (Rest); Brittney Griner - Out (Knee); Kennedy Burke - Out (Shoulder)",
+    "Dallas Wings": "Odyssey Sims - Out (Knee); Alanna Smith - Out (Lower Leg); Azzi Fudd - Out (Knee); Costanza Verona - Out (Personal)",
+    "Golden State Valkyries": "Janelle Salaun - Out (Not Injury Related); Gabby Williams - Out (Not Injury Related); Cecilia Zandalasini - Out (Not Injury Related); Iliana Rupert - Out (Not Injury Related)",
+    "Indiana Fever": "Caitlin Clark - Questionable (Back)",
     "Las Vegas Aces": "NaLyssa Smith - Out (Leg)",
-    "Minnesota Lynx": "Dorka Juhasz - Out (Not Injury Related); Elena Buenavida - Out (Coach's Decision); Antonia Delaere - Out (Not Injury Related)",
+    "Minnesota Lynx": "Anastasiia Olairi Kosu - Out (Foot)",
     "New York Liberty": "Satou Sabally - Out (Concussion)",
-    "Phoenix Mercury": "Kahleah Copper - Out (Ankle); Kelsey Plum - Out (Lower Leg); Jovana Nogic - Out (Not Injury Related)",
+    "Phoenix Mercury": "Kahleah Copper - Out (Groin); Kelsey Plum - Out (Lower Leg); Jovana Nogic - Out (Not Injury Related)",
     "Portland Fire": "Megan DiLeo - Out (Finger); Teja Oblak - Out (Knee); Bridget Carleton - Out (Ankle); Carla Leite - Out (Rest); Luisa Geiselsoder - Out (Personal); Sarah Ashlee Barker - Out (Knee); Sania Feagin - Out (Knee)",
-    "Seattle Storm": "Jade Melbourne - Questionable (Illness); Jordan Horston - Questionable (Shoulder); Katie Lou Samuelson - Out (Knee); Ezi Magbegor - Out (Lower Leg)",
-    "Toronto Tempo": "Marina Mabrey - Out (Hip); Aneesah Morrow - Out (Knee); Brittney Sykes - Out (Foot)",
-    "Washington Mystics": "Georgia Amoore - Questionable (Rest); Sonia Citron - Out (Personal)"
+    "Seattle Storm": "Zia Cooke - Out (Knee); Taina Mair - Out (Coach's Decision); Jade Melbourne - Out (Illness); Jordan Horston - Out (Shoulder); Katie Lou Samuelson - Out (Knee); Ezi Magbegor - Out (Lower Leg)",
+    "Toronto Tempo": "Maria Conde - Out (Illness); Marina Mabrey - Out (Hip); Aneesah Morrow - Out (Knee); Brittney Sykes - Out (Foot)",
+    "Washington Mystics": "Sonia Citron - Out (Personal)"
   },
-  "_updatedAt": "2026-09-17T15:27:17Z"
+  "_updatedAt": "2026-09-18T14:48:37Z"
 };
