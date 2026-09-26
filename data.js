@@ -17,5 +17,5 @@ window.LIVE_DATA = {
     "Toronto Tempo": "Kamila Borkowska - Out (Coach's Decision); Maria Gakdeng - Out (Coach's Decision); Maria Conde - Out (Back); Temi Fagbenle - Out (Personal); Marina Mabrey - Out (Hip); Aneesah Morrow - Out (Knee); Brittney Sykes - Out (Foot)",
     "Washington Mystics": "Shakira Austin - Out (Undisclosed)"
   },
-  "_updatedAt": "2026-09-25T15:44:52Z"
+  "_updatedAt": "2026-09-26T14:54:24Z"
 };
