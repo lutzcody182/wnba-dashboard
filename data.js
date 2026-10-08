@@ -7,7 +7,7 @@ window.LIVE_DATA = {
     "Dallas Wings": "Alanna Smith - Out (Lower Leg); Azzi Fudd - Out (Knee); Costanza Verona - Out (Personal)",
     "Golden State Valkyries": "Iliana Rupert - Out (Not Injury Related)",
     "Indiana Fever": "Tyasha Harris - Out (Leg)",
-    "Las Vegas Aces": "Jewell Loyd - Questionable (Leg); Dana Evans - Out (Knee); NaLyssa Smith - Out (Leg)",
+    "Las Vegas Aces": "Jewell Loyd - Out (Leg); NaLyssa Smith - Out (Leg)",
     "Los Angeles Sparks": "Ndjakalenga Mwenentanda - Out (Coach's Decision); Shyanne Sellers - Out (Coach's Decision); Cameron Brink - Out (Ankle); Aaliyah Nye - Out (Ankle)",
     "Minnesota Lynx": "Anastasiia Olairi Kosu - Out (Foot); Elena Buenavida - Out (Coach's Decision)",
     "New York Liberty": "Satou Sabally - Out (Concussion); Elizabeth Balogun - Out (Not Injury Related)",
@@ -16,5 +16,5 @@ window.LIVE_DATA = {
     "Seattle Storm": "Taina Mair - Out (Coach's Decision); Zia Cooke - Out (Knee); Katie Lou Samuelson - Out (Knee); Ezi Magbegor - Out (Lower Leg)",
     "Toronto Tempo": "Kamila Borkowska - Out (Coach's Decision); Maria Gakdeng - Out (Coach's Decision); Maria Conde - Out (Back); Temi Fagbenle - Out (Personal); Marina Mabrey - Out (Hip); Aneesah Morrow - Out (Knee); Brittney Sykes - Out (Foot)"
   },
-  "_updatedAt": "2026-10-07T17:41:24Z"
+  "_updatedAt": "2026-10-08T17:45:51Z"
 };
