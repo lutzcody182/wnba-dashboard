@@ -14,7 +14,7 @@ window.LIVE_DATA = {
     "Phoenix Mercury": "Kara Dunn - Out (Coach's Decision); Kelsey Plum - Out (Lower Leg); Jovana Nogic - Out (Not Injury Related)",
     "Portland Fire": "Holly Winterburn - Out (Back); Nyadiew Puoch - Out (Knee); Teja Oblak - Out (Knee); Luisa Geiselsoder - Out (Personal); Sarah Ashlee Barker - Out (Knee); Sania Feagin - Out (Knee)",
     "Seattle Storm": "Taina Mair - Out (Coach's Decision); Zia Cooke - Out (Knee); Katie Lou Samuelson - Out (Knee); Ezi Magbegor - Out (Lower Leg)",
-    "Toronto Tempo": "Kamila Borkowska - Out (Coach's Decision); Maria Gakdeng - Out (Coach's Decision); Maria Conde - Out (Back); Temi Fagbenle - Out (Personal); Marina Mabrey - Out (Hip); Aneesah Morrow - Out (Knee); Brittney Sykes - Out (Foot)"
+    "Toronto Tempo": "Nyara Sabally - Out (Knee); Kamila Borkowska - Out (Coach's Decision); Maria Gakdeng - Out (Coach's Decision); Maria Conde - Out (Back); Temi Fagbenle - Out (Personal); Marina Mabrey - Out (Hip); Aneesah Morrow - Out (Knee); Brittney Sykes - Out (Foot)"
   },
-  "_updatedAt": "2026-10-27T16:13:52Z"
+  "_updatedAt": "2026-10-28T17:01:28Z"
 };
