@@ -16,5 +16,5 @@ window.LIVE_DATA = {
     "Seattle Storm": "Taina Mair - Out (Coach's Decision); Zia Cooke - Out (Knee); Katie Lou Samuelson - Out (Knee); Ezi Magbegor - Out (Lower Leg)",
     "Toronto Tempo": "Nyara Sabally - Out (Knee); Kamila Borkowska - Out (Coach's Decision); Maria Gakdeng - Out (Coach's Decision); Maria Conde - Out (Back); Temi Fagbenle - Out (Personal); Marina Mabrey - Out (Hip); Aneesah Morrow - Out (Knee); Brittney Sykes - Out (Foot)"
   },
-  "_updatedAt": "2026-11-05T18:33:32Z"
+  "_updatedAt": "2026-11-06T17:49:15Z"
 };
